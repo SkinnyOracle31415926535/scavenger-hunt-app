@@ -10,9 +10,13 @@ The app gives athletes three shuffled gymnastics tasks, unlocks shared class hin
 
 ## Included so far
 
+- Complete standalone offline HTML app
 - Cohesive Windows-95 yellow-star app icon
-- Project documentation and GitHub workspace
+- Project documentation
 
 ## App file
 
-The standalone HTML file is ready to add as soon as it can be read from the original Mac. That Mac is currently out of storage, which is preventing iCloud Drive from opening the file. This repository is now the safe place to continue the project from another Mac.
+- [Open Gymnastics Scavenger Hunt](https://skinnyoracle31415926535.github.io/scavenger-hunt-app/Gymnastics%20Scavenger%20Hunt.html)
+- [Download the standalone HTML file](./Gymnastics%20Scavenger%20Hunt.html)
+
+Download the HTML file and open it in a modern browser. All CSS and JavaScript are included, so no installation or hosting is required.

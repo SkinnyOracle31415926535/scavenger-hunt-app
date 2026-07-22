@@ -1,0 +1,1862 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#007e80">
+  <meta name="description" content="Offline gymnastics scavenger hunt tracker">
+  <title>Gymnastics Scavenger Hunt — Offline</title>
+  <style>
+    :root {
+      --teal: #007e80;
+      --teal-dark: #005f62;
+      --gray: #c0c0c0;
+      --light: #f2f2f2;
+      --dark: #444;
+      --blue: #000080;
+      --bright-blue: #103cb6;
+      --yellow: #ffe300;
+      --danger: #a90000;
+      --ink: #141414;
+    }
+    * { box-sizing: border-box; }
+    html { background: var(--teal-dark); }
+    body {
+      min-width: 320px;
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 14% 20%, rgba(255,255,255,.13) 0 1px, transparent 1.5px) 0 0 / 16px 16px,
+        linear-gradient(135deg, var(--teal), var(--teal-dark));
+      font: 14px/1.3 Arial, "MS Sans Serif", Tahoma, sans-serif;
+    }
+    button, input, select, textarea { font: inherit; }
+    button, select { cursor: pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+    .desktop { position: relative; min-height: 100vh; padding: 20px clamp(10px, 2.5vw, 40px) 14px; overflow: hidden; }
+    .star-field { position: absolute; inset: 0; pointer-events: none; color: var(--yellow); font-size: 24px; text-shadow: 1px 1px #725600; }
+    .star-field span { position: absolute; }
+    .star-field span:nth-child(1) { top: 3%; left: 4%; }
+    .star-field span:nth-child(2) { top: 12%; right: 6%; font-size: 16px; }
+    .star-field span:nth-child(3) { top: 78%; left: 2%; font-size: 14px; }
+    .star-field span:nth-child(4) { bottom: 5%; right: 6%; font-size: 17px; }
+    .window {
+      position: relative;
+      border: 2px solid;
+      border-color: #fff #444 #444 #fff;
+      background: var(--gray);
+      box-shadow: 1px 1px #111, 3px 3px rgba(0,0,0,.28);
+    }
+    .titlebar {
+      display: flex;
+      min-height: 27px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 6px 4px 8px;
+      color: #fff;
+      background: linear-gradient(90deg, var(--blue), var(--bright-blue));
+      font-family: "Courier New", monospace;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .06em;
+    }
+    .titlebar small { color: var(--yellow); font: inherit; }
+    .window-buttons { display: flex; gap: 3px; }
+    .window-buttons span { display: grid; width: 18px; height: 17px; place-items: center; color: #111; border: 2px solid; border-color: #fff #444 #444 #fff; background: var(--gray); font: 12px Arial; }
+    .hero { z-index: 1; max-width: 1380px; margin: 0 auto 12px; }
+    .hero-body { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 18px 22px; background: linear-gradient(100deg, #e3e3e3, #b7b7b7); }
+    .eyebrow { margin: 0 0 5px; color: var(--blue); font: 900 10px "Courier New", monospace; letter-spacing: .08em; }
+    h1 { margin: 0; font: 900 clamp(29px, 4vw, 50px)/.95 "Courier New", monospace; letter-spacing: -.08em; text-shadow: 2px 2px #fff; }
+    h1 span { color: #c79700; text-shadow: 2px 2px #806200; }
+    .hero-copy { max-width: 640px; margin: 9px 0 0; color: #333; }
+    .star-total { display: grid; min-width: 142px; place-items: center; padding: 9px 13px; border: 2px solid; border-color: #555 #fff #fff #555; background: #fffcc5; text-align: center; }
+    .star-total strong { color: var(--blue); font: 900 31px/.85 "Courier New", monospace; }
+    .star-total b { color: #d4a100; font-size: 28px; text-shadow: 1px 1px #806300; }
+    .star-total small { font: 900 8px "Courier New", monospace; }
+    .toolbar { z-index: 1; display: flex; max-width: 1380px; align-items: end; flex-wrap: wrap; gap: 8px; margin: 0 auto 12px; padding: 8px; }
+    .toolbar label { display: grid; min-width: 220px; gap: 3px; }
+    .toolbar label span, .field-label { color: #333; font: 900 9px "Courier New", monospace; letter-spacing: .07em; }
+    .save-status { align-self: center; margin-left: auto; color: #444; font-size: 11px; white-space: nowrap; }
+    .save-status b { color: #087b29; }
+    input, select, textarea { width: 100%; border: 2px solid; border-color: #555 #fff #fff #555; border-radius: 0; background: #fff; box-shadow: inset 1px 1px #888; }
+    input, select { min-height: 30px; padding: 4px 6px; }
+    textarea { min-height: 60px; padding: 6px; resize: vertical; }
+    .button {
+      min-height: 31px;
+      padding: 5px 10px;
+      color: #111;
+      border: 2px solid;
+      border-color: #fff #444 #444 #fff;
+      background: linear-gradient(#eee, #bdbdbd);
+      box-shadow: 1px 1px #777;
+      font: 900 11px "Courier New", monospace;
+      letter-spacing: .02em;
+      white-space: nowrap;
+    }
+    .button:active { border-color: #444 #fff #fff #444; box-shadow: none; transform: translate(1px, 1px); }
+    .button.blue { color: #fff; border-color: #5974e4 #00004c #00004c #5974e4; background: linear-gradient(#1647c8, #000d72); text-shadow: 1px 1px #00004a; }
+    .button.yellow { border-color: #fff6ac #826800 #826800 #fff6ac; background: linear-gradient(#fff69b, #dfb900); }
+    .button.danger { color: #fff; border-color: #e88080 #540000 #540000 #e88080; background: linear-gradient(#d22323, #7e0000); text-shadow: 1px 1px #450000; }
+    .button:disabled { cursor: not-allowed; opacity: .55; }
+    .start-play-button {
+      position: relative;
+      min-width: 176px;
+      min-height: 35px;
+      padding-right: 30px;
+      border-width: 3px;
+      border-color: #a9bdff #00003f #00003f #a9bdff;
+      background: linear-gradient(#2859da 0 48%, #000970 49% 100%);
+      box-shadow: 1px 1px #000, 3px 3px 0 #4f4f4f, 0 0 0 2px var(--yellow);
+      outline: 1px dotted #fff;
+      outline-offset: -7px;
+      animation: play-ready-blink 1.1s steps(1, end) infinite;
+    }
+    .start-play-button::after {
+      content: "●";
+      position: absolute;
+      top: 50%;
+      right: 8px;
+      color: var(--yellow);
+      font: 900 15px/1 Arial, sans-serif;
+      text-shadow: 1px 1px #6a5300;
+      transform: translateY(-50%);
+      animation: play-ready-lamp 1.1s steps(1, end) infinite;
+    }
+    .start-play-button:hover, .start-play-button:focus-visible { animation-play-state: paused; }
+    .start-play-button:hover::after, .start-play-button:focus-visible::after { animation-play-state: paused; color: #fff; }
+    @keyframes play-ready-blink {
+      0%, 49% { box-shadow: 1px 1px #000, 3px 3px 0 #4f4f4f, 0 0 0 2px var(--yellow); }
+      50%, 100% { box-shadow: 1px 1px #000, 3px 3px 0 #4f4f4f, 0 0 0 2px #776100; }
+    }
+    @keyframes play-ready-lamp {
+      0%, 49% { color: var(--yellow); }
+      50%, 100% { color: #8a7000; }
+    }
+    .mode-badge { display: inline-grid; min-width: 88px; place-items: center; padding: 3px 6px; color: var(--yellow); border: 1px solid rgba(255,255,255,.55); font: 900 9px "Courier New", monospace; letter-spacing: .06em; }
+    .admin-only { }
+    .play-only { display: none !important; }
+    .play-mode .admin-only { display: none !important; }
+    .play-mode .play-only { display: inline-flex !important; }
+    .play-mode .play-actions.play-only { display: flex !important; }
+    .play-mode .layout { grid-template-columns: minmax(0, 1320px); justify-content: center; }
+    .play-mode .center { grid-column: 1; }
+    .play-mode .live-grid { grid-template-columns: minmax(0, 1fr); }
+    .play-mode .hero { max-width: 1320px; }
+    .play-mode .toolbar { max-width: 1320px; justify-content: end; }
+    .play-mode .toolbar .save-status { margin-left: 0; }
+    .layout { position: relative; z-index: 1; display: grid; grid-template-columns: 178px minmax(0, 1fr) 250px; gap: 12px; max-width: 1380px; margin: 0 auto; align-items: start; }
+    .event-window { position: sticky; top: 10px; }
+    #event-list { padding: 7px; }
+    .event-button { display: grid; grid-template-columns: 16px 1fr 19px; width: 100%; min-height: 36px; align-items: center; gap: 4px; padding: 5px 7px; border: 0; background: transparent; color: #222; text-align: left; font: 900 12px "Courier New", monospace; }
+    .event-button:hover { background: #d9d9d9; }
+    .event-button.active { color: #fff; background: var(--blue); }
+    .event-button .orb { color: #d4a100; font-size: 15px; text-shadow: 1px 1px #806300; }
+    .event-button.active .orb { color: var(--yellow); }
+    .event-button small { display: grid; width: 18px; height: 18px; place-items: center; color: #111; border: 1px solid #777; background: #eee; font: 10px Arial; }
+    .event-note { margin: 4px 8px 10px; padding: 8px 5px; border-top: 1px solid #888; color: #4b4b4b; font-size: 11px; }
+    .event-note b { color: #ce9d00; }
+    .center { display: grid; min-width: 0; gap: 12px; }
+    .sheet-tabs { display: flex; min-height: 37px; align-items: end; gap: 3px; overflow-x: auto; padding: 7px 7px 0; border-bottom: 2px solid #777; background: #aaa; }
+    .sheet-tab { max-width: 175px; min-height: 29px; overflow: hidden; padding: 5px 9px; border: 2px solid; border-color: #e5e5e5 #555 #555 #e5e5e5; border-bottom: 0; background: #bdbdbd; font: 900 10px "Courier New", monospace; text-overflow: ellipsis; white-space: nowrap; }
+    .sheet-tab.active { position: relative; z-index: 1; min-height: 31px; margin-bottom: -2px; background: var(--gray); border-bottom-color: var(--gray); }
+    .sheet-tab.add { color: var(--blue); background: #dadada; }
+    .hunt-heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; padding: 15px 16px 11px; }
+    .hunt-heading > div { min-width: 0; flex: 1; }
+    .hunt-name { min-height: 35px; border: 0; box-shadow: none; background: transparent; padding: 0; font: 900 clamp(20px, 2.2vw, 29px)/1 "Courier New", monospace; letter-spacing: -.06em; }
+    .hunt-name:focus { border: 2px solid var(--blue); background: #fff; padding: 0 5px; }
+    .hunt-actions { display: flex; align-items: end; flex-direction: column; gap: 5px; }
+    .link-button { padding: 0; border: 0; background: transparent; color: var(--blue); font-size: 11px; text-decoration: underline; }
+    .settings-grid { display: grid; grid-template-columns: minmax(150px, 1.15fr) 96px 91px minmax(180px, 1.25fr); gap: 10px; padding: 10px 16px 16px; border-top: 1px solid #898989; }
+    .settings-grid label { display: grid; gap: 4px; }
+    .unit { position: relative; }
+    .unit input { padding-right: 33px; }
+    .unit b { position: absolute; top: 8px; right: 7px; color: var(--blue); font: 900 10px "Courier New", monospace; }
+    .coach-secret { display: grid; grid-template-columns: 1fr auto; gap: 4px 7px; }
+    .coach-secret textarea, .coach-secret p { grid-column: 1 / -1; }
+    .coach-secret p { margin: 0; padding: 7px; border: 1px dashed #666; color: #555; background: #d6d6d6; font-size: 11px; }
+    .coach-secret button { padding: 0; border: 0; background: transparent; color: var(--blue); font: 900 10px "Courier New", monospace; text-decoration: underline; }
+    .live-grid { display: grid; grid-template-columns: minmax(0, 1fr) 284px; gap: 12px; }
+    .round-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; padding: 9px 9px 0; }
+    .round-tab { display: grid; grid-template-columns: 23px 1fr 10px; min-height: 43px; align-items: center; gap: 5px; padding: 4px; border: 2px solid; border-color: #fff #555 #555 #fff; background: #d8d8d8; color: #333; text-align: left; }
+    .round-tab.active { color: #fff; border-color: #5d7de8 #00005b #00005b #5d7de8; background: var(--blue); }
+    .round-tab.open:not(.active) { background: #fff19c; }
+    .round-tab b { display: grid; width: 21px; height: 21px; place-items: center; color: #fff; background: #0a37b7; font: 900 12px "Courier New", monospace; }
+    .round-tab span { overflow: hidden; font: 900 9px/1.1 "Courier New", monospace; text-overflow: ellipsis; white-space: nowrap; }
+    .round-tab i { color: var(--yellow); font-style: normal; }
+    .live-content { padding: 10px; }
+    .timer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px; border: 2px solid; border-color: #555 #fff #fff #555; background: #999; }
+    .timer span { color: #f5f5f5; font: 900 9px "Courier New", monospace; }
+    .timer strong { margin-left: 8px; color: var(--yellow); font: 900 29px "Courier New", monospace; letter-spacing: -.08em; text-shadow: 2px 2px #222; }
+    .timer strong.urgent { color: #ff8989; }
+    .timer-controls { display: flex; gap: 6px; }
+    .mission { margin-top: 10px; padding: 9px; border: 2px solid; border-color: #fff #777 #777 #fff; background: #ddd; }
+    .section-label { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 7px; }
+    .section-label b { color: #333; font: 900 9px "Courier New", monospace; letter-spacing: .06em; }
+    .section-label small { color: #555; font-size: 10px; }
+    .task-line { display: grid; grid-template-columns: 25px minmax(0, 1fr); align-items: center; gap: 5px; margin-top: 5px; }
+    .task-line b { display: grid; width: 24px; height: 24px; place-items: center; color: var(--blue); border: 2px solid; border-color: #555 #fff #fff #555; background: var(--yellow); font: 900 12px "Courier New", monospace; }
+    .task-line input { min-height: 27px; font-size: 12px; }
+    .task-table-wrap { position: relative; max-height: min(58vh, 540px); overflow: auto; overscroll-behavior: contain; border: 2px solid; border-color: #555 #fff #fff #555; background: #f4f4f4; scrollbar-gutter: stable both-edges; }
+    .task-table { width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; }
+    .task-table th { position: sticky; z-index: 3; top: 0; padding: 5px 4px; color: #fff; background: var(--blue); font: 900 9px "Courier New", monospace; letter-spacing: .05em; text-align: left; white-space: nowrap; }
+    .task-table td { padding: 4px; border-top: 1px solid #9a9a9a; background: #f4f4f4; }
+    .task-table th:first-child, .task-table td:first-child { width: 34px; min-width: 34px; max-width: 34px; text-align: center; }
+    .task-table th:first-child { z-index: 6; left: 0; }
+    .task-table td:first-child { position: sticky; z-index: 2; left: 0; color: var(--blue); font: 900 12px "Courier New", monospace; }
+    .task-table th:nth-child(2), .task-table td:nth-child(2) { width: clamp(190px, 25vw, 300px); min-width: 190px; }
+    .task-table th:nth-child(2) { z-index: 5; left: 34px; box-shadow: 2px 0 #777; }
+    .task-table td:nth-child(2) { position: sticky; z-index: 2; left: 34px; box-shadow: 2px 0 #aaa; }
+    .task-table .eligibility-head, .task-table .eligibility-cell, .task-table .override-cell { width: 52px; min-width: 52px; max-width: 62px; padding-right: 3px; padding-left: 3px; overflow: hidden; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+    .task-table td:last-child, .task-table th:last-child { width: 36px; min-width: 36px; text-align: center; }
+    .task-table input[type="text"] { min-height: 27px; font-size: 12px; }
+    .task-table input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--blue); }
+    .mini-button { min-height: 25px; padding: 3px 6px; border: 2px solid; border-color: #fff #444 #444 #fff; background: #d4d4d4; color: #222; font: 900 10px "Courier New", monospace; }
+    .task-controls { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
+    .task-controls small { color: #555; font-size: 10px; }
+    .task-controls > div { display: flex; flex-wrap: wrap; justify-content: end; gap: 5px; }
+    .athlete-picker { display: flex; flex-wrap: wrap; gap: 5px; margin: 0 0 8px; padding: 6px; border: 2px solid; border-color: #555 #fff #fff #555; background: #a9a9a9; }
+    .athlete-tab { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; min-width: 105px; min-height: 31px; align-items: center; gap: 5px; padding: 4px 6px; color: #222; border: 2px solid; border-color: #fff #555 #555 #fff; background: #dedede; text-align: left; }
+    .athlete-tab:hover { background: #efefef; }
+    .athlete-tab.active { color: #fff; border-color: #5d7de8 #00005b #00005b #5d7de8; background: var(--blue); }
+    .athlete-tab .orb { color: #b08a00; font-size: 13px; line-height: 1; text-shadow: 1px 1px #fff0a0; }
+    .athlete-tab.active .orb { color: var(--yellow); }
+    .athlete-tab strong { overflow: hidden; font: 900 10px "Courier New", monospace; text-overflow: ellipsis; white-space: nowrap; }
+    .athlete-tab small { min-width: 23px; color: #333; font: 900 9px "Courier New", monospace; text-align: right; }
+    .athlete-tab.active small { color: var(--yellow); }
+    .task-card { display: grid; grid-template-columns: 48px minmax(0,1fr); align-items: center; gap: 10px; margin-top: 8px; padding: 11px; border: 2px solid; border-color: #fff #555 #555 #fff; background: #eee; }
+    .task-card.done { border-color: #8d7300 #fff5a7 #fff5a7 #8d7300; background: #fff2a8; }
+    .task-card button { display: grid; width: 42px; height: 42px; place-items: center; padding: 0; color: #777; border: 2px solid; border-color: #fff #555 #555 #fff; background: #d6d6d6; font-size: 28px; line-height: 1; }
+    .task-card.done button { color: #c99500; border-color: #876c00 #fff6a6 #fff6a6 #876c00; background: var(--yellow); }
+    .task-card strong { display: block; font: 900 15px/1.25 "Courier New", monospace; }
+    .task-card small { color: #555; font-size: 10px; }
+    .play-roster-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)); gap: 9px; }
+    .athlete-mission { min-width: 0; padding: 8px; border: 2px solid; border-color: #fff #555 #555 #fff; background: #d6d6d6; }
+    .athlete-mission-head { display: flex; align-items: center; justify-content: space-between; gap: 7px; padding: 4px 5px 7px; border-bottom: 1px solid #888; }
+    .athlete-mission-head b { overflow: hidden; color: var(--blue); font: 900 13px "Courier New", monospace; text-overflow: ellipsis; white-space: nowrap; }
+    .athlete-mission-head small { color: #555; font: 900 9px "Courier New", monospace; text-align: right; white-space: nowrap; }
+    .athlete-mission .task-card { grid-template-columns: 38px minmax(0, 1fr); gap: 7px; margin-top: 7px; padding: 7px; }
+    .athlete-mission .task-card button { width: 34px; height: 34px; font-size: 23px; }
+    .athlete-mission .task-card strong { font-size: 12px; }
+    .athlete-mission .task-card small { font-size: 8px; }
+    .athlete-mission-footer { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 7px; margin-top: 8px; }
+    .athlete-mission-footer small { color: #444; font: 900 9px "Courier New", monospace; }
+    .athlete-mission-footer .mini-button { min-height: 28px; }
+    .player-hint { margin-top: 8px; padding: 7px; border: 1px dashed #777; background: #c4c4c4; }
+    .player-hint.open { border-color: #8d7300; background: #fff2a8; }
+    .player-hint b { display: block; color: #555; font: 900 9px "Courier New", monospace; }
+    .player-hint.open b { color: #765800; }
+    .player-hint p { margin: 4px 0 0; color: #444; font-size: 11px; line-height: 1.3; }
+    .play-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; padding: 9px; border: 2px solid; border-color: #555 #fff #fff #555; background: #9b9b9b; }
+    .play-actions p { margin: 0; color: #fff; font: 900 10px "Courier New", monospace; }
+    .play-actions p b { color: var(--yellow); font-size: 15px; }
+    .clue { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 10px; padding: 11px; border: 2px solid; border-color: #555 #fff #fff #555; background: #a7a7a7; }
+    .clue.open { border-color: #8c7300 #fff8ab #fff8ab #8c7300; background: #fff2a8; }
+    .clue > div { min-width: 0; flex: 1; }
+    .clue b { display: block; color: #333; font: 900 10px "Courier New", monospace; }
+    .clue.open b { color: #765800; }
+    .clue p { margin: 5px 0 0; color: #555; font-size: 12px; }
+    .clue textarea { margin-top: 5px; background: #fffde4; font-size: 12px; }
+    .roster-intro { padding: 9px 10px; border-bottom: 1px solid #777; color: #444; font-size: 11px; }
+    .athlete-list { max-height: 500px; overflow: auto; padding: 5px; }
+    .athlete-row { display: grid; grid-template-columns: 33px minmax(0, 1fr); align-items: center; gap: 5px; min-height: 58px; padding: 5px; border-bottom: 1px solid #969696; }
+    .athlete-row.done { background: #fff5ae; }
+    .completion { width: 29px; height: 29px; padding: 0 0 2px; color: #777; border: 2px solid; border-color: #fff #555 #555 #fff; background: #d6d6d6; font-size: 22px; line-height: 1; }
+    .athlete-row.done .completion { color: #d19e00; border-color: #876c00 #fff6a6 #fff6a6 #876c00; background: var(--yellow); text-shadow: 1px 1px #fff7af; }
+    .athlete-row strong { display: block; overflow: hidden; margin-bottom: 3px; font: 900 12px "Courier New", monospace; text-overflow: ellipsis; white-space: nowrap; }
+    .athlete-row select { min-height: 23px; padding: 2px; font-size: 9px; }
+    .roster-footer { padding: 9px 8px; border-top: 1px solid #777; color: #444; font-size: 11px; }
+    .roster-footer b { color: #ce9d00; }
+    .round-panel-content { padding: 10px; }
+    .round-panel-content p { margin: 0 0 8px; color: #444; font-size: 11px; line-height: 1.35; }
+    .round-panel-content .button { width: 100%; margin-top: 7px; }
+    .round-panel-content .stat-box { margin: 8px 0; padding: 9px; border: 2px solid; border-color: #555 #fff #fff #555; background: #dedede; }
+    .round-panel-content .stat-box b { display: block; color: var(--blue); font: 900 22px "Courier New", monospace; }
+    .round-panel-content .stat-box small { color: #555; font: 900 9px "Courier New", monospace; }
+    .right { display: grid; gap: 12px; }
+    .board { padding: 6px; }
+    .score-row { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto auto; align-items: center; gap: 5px; min-height: 37px; border-bottom: 1px solid #8e8e8e; }
+    .score-row:last-child { border: 0; }
+    .rank { display: grid; width: 19px; height: 19px; place-items: center; color: #fff; background: var(--blue); font: 900 10px "Courier New", monospace; }
+    .score-row:first-child .rank { color: #614e00; background: var(--yellow); }
+    .score-row strong { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+    .score-row small { color: #555; font-size: 9px; white-space: nowrap; }
+    .score-row b { color: #765800; font: 900 10px "Courier New", monospace; white-space: nowrap; }
+    .empty { margin: 7px; padding: 13px 7px; border: 1px dashed #777; color: #555; background: #d7d7d7; text-align: center; font-size: 12px; line-height: 1.5; }
+    .quick { padding-bottom: 9px; }
+    .quick ol { margin: 11px 12px 10px; padding: 0; list-style: none; }
+    .quick li { margin: 6px 0; color: #444; font-size: 12px; }
+    .quick li b { display: inline-grid; width: 17px; height: 17px; place-items: center; margin-right: 4px; color: #fff; background: var(--blue); font: 900 9px "Courier New", monospace; }
+    .quick .button { width: calc(100% - 18px); margin: 0 9px; }
+    .finder { padding: 13px; text-align: center; }
+    .finder > b { display: block; color: #d5a400; font-size: 34px; line-height: 1; text-shadow: 1px 1px #806300; }
+    .finder p { margin: 5px 0 3px; font-size: 12px; line-height: 1.35; }
+    .finder em { color: var(--blue); font-style: normal; font-weight: 700; }
+    .finder small { color: #5b5b5b; font-size: 10px; }
+    .footer { position: relative; z-index: 1; max-width: 1380px; margin: 14px auto 0; color: #e8f7f6; font: 900 9px "Courier New", monospace; letter-spacing: .04em; text-align: center; }
+    .footer b { color: var(--yellow); }
+    .modal-layer { position: fixed; z-index: 10; inset: 0; display: none; place-items: center; padding: 18px; background: rgba(0,35,35,.72); }
+    .modal-layer.open { display: grid; }
+    .modal { width: min(590px, 100%); max-height: calc(100vh - 36px); overflow: auto; }
+    .modal-body { padding: 16px; }
+    .modal-body p { margin-top: 0; color: #383838; line-height: 1.4; }
+    .modal-form { display: grid; gap: 13px; }
+    .modal-form label { display: grid; gap: 4px; }
+    .modal-form label > span { color: #333; font: 900 9px "Courier New", monospace; letter-spacing: .07em; }
+    .modal-form textarea { min-height: 115px; }
+    .modal-actions { display: flex; justify-content: end; flex-wrap: wrap; gap: 8px; }
+    .next-task-preview { padding: 10px; border: 2px solid; border-color: #8c7300 #fff8ab #fff8ab #8c7300; background: #fff2a8; }
+    .next-task-preview small { display: block; margin-bottom: 6px; color: #765800; font: 900 9px "Courier New", monospace; letter-spacing: .05em; }
+    .next-task-preview ol { margin: 0; padding-left: 24px; color: #333; }
+    .next-task-preview li { margin: 4px 0; font: 900 12px/1.3 "Courier New", monospace; }
+    .checkboxes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; padding: 8px; border: 1px solid #777; }
+    .checkboxes label { display: block; color: #333; font-size: 12px; }
+    .checkboxes input { width: auto; min-height: auto; }
+    .lesson-card { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px; border: 2px solid; border-color: #fff #777 #777 #fff; background: #ddd; }
+    .lesson-card + .lesson-card { margin-top: 8px; }
+    .lesson-card small { color: var(--blue); font: 900 9px "Courier New", monospace; }
+    .lesson-card h3 { margin: 3px 0; font: 900 14px "Courier New", monospace; }
+    .lesson-card p { margin: 0; color: #555; font-size: 11px; }
+    .modal-bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid #888; }
+    .settings-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 14px; padding: 12px 0; border-top: 1px solid #8d8d8d; }
+    .settings-row p { margin: 3px 0 0; color: #5b5b5b; font-size: 11px; }
+    .settings-row.warning b { color: var(--danger); }
+    .warning-copy { padding: 10px; border: 2px solid; border-color: #8e0000 #ff9a9a #ff9a9a #8e0000; color: #720000 !important; background: #ffd0d0; }
+    .toast { position: fixed; z-index: 12; right: 18px; bottom: 18px; display: none; max-width: min(385px, calc(100vw - 36px)); padding: 11px 14px; color: #fff; border: 2px solid; border-color: #ffffa8 #393900 #393900 #ffffa8; background: var(--blue); box-shadow: 3px 3px #111; font: 900 12px "Courier New", monospace; }
+    .toast.show { display: block; }
+    .hidden { display: none !important; }
+    @media (max-width: 1120px) {
+      .layout { grid-template-columns: 160px minmax(0,1fr); }
+      .right { grid-column: 1 / -1; grid-template-columns: 1fr 1fr 1fr; }
+      .settings-grid { grid-template-columns: minmax(150px,1fr) 98px 92px; }
+      .coach-secret { grid-column: 1 / -1; }
+    }
+    @media (max-width: 780px) {
+      .desktop { padding: 10px; }
+      .hero-body { align-items: stretch; flex-direction: column; padding: 16px; }
+      .layout { grid-template-columns: 1fr; }
+      .event-window { position: relative; top: auto; }
+      #event-list { display: flex; overflow-x: auto; padding: 4px; }
+      .event-button { min-width: 124px; border-right: 1px solid #999; }
+      .event-note { display: none; }
+      .live-grid { grid-template-columns: 1fr; }
+      .right { grid-column: auto; grid-template-columns: 1fr; }
+      .hunt-heading { align-items: start; flex-direction: column; }
+      .hunt-actions { align-items: start; }
+      .settings-grid { grid-template-columns: 1fr 1fr; }
+      .coach-secret { grid-column: 1 / -1; }
+      .timer, .clue { align-items: stretch; flex-direction: column; }
+      .timer-controls .button { flex: 1; }
+      .play-actions { align-items: stretch; flex-direction: column; }
+      .athlete-picker { max-height: 150px; overflow: auto; }
+      .play-roster-grid { grid-template-columns: 1fr; }
+      .task-table-wrap { max-height: 56vh; }
+      .task-table th:nth-child(2), .task-table td:nth-child(2) { width: 190px; min-width: 190px; }
+      .task-table .eligibility-head, .task-table .eligibility-cell, .task-table .override-cell { width: 48px; min-width: 48px; }
+    }
+    @media (max-width: 480px) {
+      .desktop { padding: 7px; }
+      h1 { font-size: 32px; }
+      .toolbar > .button { flex: 1; }
+      .toolbar label { width: 100%; }
+      .save-status { width: 100%; margin-left: 0; }
+      .settings-grid { grid-template-columns: 1fr; }
+      .round-tab { grid-template-columns: 20px 1fr; }
+      .round-tab i { display: none; }
+      .checkboxes { grid-template-columns: repeat(2, 1fr); }
+      .lesson-card, .modal-bottom { align-items: stretch; flex-direction: column; }
+      .settings-row { grid-template-columns: 1fr; }
+      .task-table .eligibility-head, .task-table .eligibility-cell, .task-table .override-cell { width: 44px; min-width: 44px; }
+      .task-controls { align-items: stretch; flex-direction: column; }
+      .task-controls > div { justify-content: stretch; }
+      .task-controls .mini-button { flex: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .start-play-button, .start-play-button::after { animation: none; }
+    }
+  </style>
+</head>
+<body id="app-body">
+  <div class="desktop">
+    <div class="star-field" aria-hidden="true"><span>★</span><span>✦</span><span>★</span><span>✧</span></div>
+    <header class="window hero">
+      <div class="titlebar"><span><b>★</b> SCAVENGER HUNT.exe</span><span class="mode-badge" id="mode-badge">ADMIN MODE</span><span class="window-buttons"><span>_</span><span>□</span><span>×</span></span></div>
+      <div class="hero-body">
+        <div>
+          <p class="eyebrow" id="camp-label">GYMNASTICS SCAVENGER HUNT SYSTEM</p>
+          <h1>Gymnastics <span>Scavenger Hunt</span></h1>
+          <p class="hero-copy">Coach console for tiny treasures, ten-minute missions, and big summer wins. This offline file saves on this device.</p>
+        </div>
+        <div class="star-total" aria-label="Stars awarded"><strong id="star-total">0</strong><b>★</b><small>STARS AWARDED</small></div>
+      </div>
+    </header>
+
+    <section class="window toolbar" aria-label="Camp controls">
+      <label class="admin-only"><span>ACTIVE CLASS</span><select id="class-select"></select></label>
+      <button class="button blue admin-only" data-action="new-class">＋ NEW CLASS</button>
+      <button class="button admin-only" data-action="lessons">▤ LESSON LIBRARY</button>
+      <button class="button blue admin-only start-play-button" data-action="start-play" id="start-play-button">▶ START PLAY MODE</button>
+      <button class="button yellow play-only" data-action="exit-play" id="exit-play-button">🔒 EXIT PLAY MODE</button>
+      <button class="button admin-only" data-action="settings">⚙ SETTINGS</button>
+      <span class="save-status" id="save-status"><b>●</b> Saved on this device</span>
+    </section>
+
+    <main class="layout">
+      <aside class="window event-window admin-only">
+        <div class="titlebar"><span>EVENT SELECTOR</span></div>
+        <div id="event-list"></div>
+        <div class="event-note"><b>★</b> Each event keeps its own hunt sheets.</div>
+      </aside>
+
+      <section class="center">
+        <section class="window admin-only">
+          <div class="titlebar"><span id="event-title">MUSHROOM HUNT SHEETS</span><small id="hunt-status">LIVE</small></div>
+          <div class="sheet-tabs" id="sheet-tabs" role="tablist"></div>
+          <div class="hunt-heading">
+            <div><p class="eyebrow" id="path-label"></p><input class="hunt-name" id="hunt-title" aria-label="Hunt name"></div>
+            <div class="hunt-actions"><button class="button yellow" data-action="finder" id="finder-button">★ RECORD FINDER</button><button class="link-button" data-action="archive" id="archive-button">End with no finder</button></div>
+          </div>
+          <div class="settings-grid">
+            <label><span class="field-label">HIDDEN OBJECT</span><input id="object-name" aria-label="Hidden object"></label>
+            <label><span class="field-label">ROUND TIMER</span><span class="unit"><input id="round-duration" type="number" min="1" max="60" aria-label="Round duration"><b>MIN</b></span></label>
+            <label><span class="field-label">STAR VALUE</span><span class="unit"><input id="point-value" type="number" min="0" max="99" aria-label="Star value"><b>★</b></span></label>
+            <div class="coach-secret">
+              <span class="field-label">COACH-ONLY HIDING SPOT</span><button data-action="toggle-secret" id="secret-button">SHOW NOTE</button>
+              <p id="sealed-note">Sealed while campers can see the screen.</p>
+              <textarea id="coach-note" class="hidden" aria-label="Coach-only hiding spot" placeholder="Example: behind the folded red panel mat"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <section class="live-grid">
+          <section class="window">
+            <div class="titlebar"><span id="mission-title">MISSION CONTROL</span><small id="mission-status">ADMIN SETUP</small></div>
+            <div class="round-tabs" id="round-tabs" role="tablist"></div>
+            <div class="live-content">
+              <div class="timer">
+                <div><span id="timer-label">ROUND 1 TIMER</span><strong id="timer-readout">10:00</strong></div>
+                <div class="timer-controls"><button class="button blue" data-action="timer" id="timer-button">▶ START</button><button class="button" data-action="timer-reset">↺ RESET</button></div>
+              </div>
+                <div class="mission">
+                  <div class="section-label"><b id="task-section-title">TASK TABLE</b><small id="task-section-note">Preload tasks; Play Mode randomly picks three.</small></div>
+                  <div class="athlete-picker admin-only" id="athlete-picker" aria-label="Athlete task lists"></div>
+                  <div id="task-list"></div>
+                <div class="play-actions play-only" id="play-actions"><p id="play-progress">3 tasks to finish for a hint.</p><button class="button yellow" data-action="reshuffle" id="reshuffle-button">↺ RESHUFFLE 3</button></div>
+              </div>
+              <div class="clue" id="clue-box">
+                <div><b id="clue-label">★ SEALED CLUE</b><p id="clue-sealed">Finish your mini missions, then let the coach reveal the next hint.</p><textarea id="clue-text" class="hidden" aria-label="Round clue"></textarea></div>
+                <button class="button yellow admin-only" data-action="reveal-clue" id="clue-button">REVEAL HINT NOW</button>
+                <button class="button blue play-only" data-action="next-round" id="next-round-button">NEXT HINT ROUND</button>
+              </div>
+            </div>
+          </section>
+
+          <aside class="window" id="round-panel">
+            <div class="titlebar"><span id="round-panel-title">PLAY SETUP</span><small id="round-panel-count">3 TASKS</small></div>
+            <div class="round-panel-content" id="round-panel-content"></div>
+          </aside>
+        </section>
+      </section>
+
+      <aside class="right admin-only">
+        <section class="window">
+          <div class="titlebar"><span>SUMMER STAR BOARD</span><small>★</small></div>
+          <div class="board" id="leaderboard"></div>
+        </section>
+        <section class="window quick">
+          <div class="titlebar"><span>QUICK RULES</span></div>
+          <ol><li><b>1.</b> Assign a small mission.</li><li><b>2.</b> Let a clue out after work.</li><li><b>3.</b> Record the first finder.</li></ol>
+          <button class="button" data-action="save-lesson">▤ SAVE THIS AS A LESSON</button>
+        </section>
+        <section class="window">
+          <div class="titlebar"><span>THIS HUNT</span></div>
+          <div class="finder" id="finder-summary"></div>
+        </section>
+      </aside>
+    </main>
+    <footer class="footer"><b>★</b> OFFLINE COACH TOOL · OBJECT LOCATION STAYS SEALED UNTIL YOU OPEN IT <b>✦</b></footer>
+  </div>
+
+  <div class="modal-layer" id="modal-layer" aria-hidden="true"></div>
+  <div class="toast" id="toast" role="status"></div>
+  <input id="backup-file" class="hidden" type="file" accept="application/json,.json">
+
+  <script>
+    (function () {
+      "use strict";
+
+      var STORAGE_KEY = "star-search-offline-v1";
+      var EVENTS = ["Floor", "Mushroom", "Rings", "Vault", "P-Bars", "High Bar"];
+      var counter = 0;
+      var modal = null;
+      var pendingFinish = null;
+      var pendingSharedHint = null;
+      var secretVisible = false;
+      var toastTimer = null;
+      var timer = { running: false, seconds: 600 };
+
+      function id(prefix) {
+        counter += 1;
+        return prefix + "-" + Date.now().toString(36) + "-" + counter.toString(36);
+      }
+
+      function copy(value) {
+        return JSON.parse(JSON.stringify(value));
+      }
+
+      function esc(value) {
+        return String(value == null ? "" : value).replace(/[&<>"']/g, function (character) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character];
+        });
+      }
+
+      function option(value, label, selected) {
+        return "<option value=\"" + esc(value) + "\"" + (selected ? " selected" : "") + ">" + esc(label) + "</option>";
+      }
+
+      function missionData(eventName) {
+        var data = {
+          "Floor": [
+            ["Star Shapes", "Your first star is resting near a long blue path.", ["Hold a tight hollow for 10 seconds", "Stick a star jump with quiet feet", "Show a lunge and lever shape", "Roll safely forward on a panel mat", "Walk a straight line with superhero arms"]],
+            ["Travel Mission", "Look where gymnasts travel without leaving the ground.", ["Bear walk five careful steps", "Crab walk five careful steps", "Cartwheel prep over a line", "Side slide in a wide straddle", "Jump, turn, and freeze in a finish"]],
+            ["Landing Lab", "The tiny prize is close to a place made for soft landings.", ["Rebound and freeze on a mat", "Step-hop to a stick", "Pencil jump with a safe landing", "Tuck jump with a quiet finish", "Arabesque balance for five seconds"]]
+          ],
+          "Mushroom": [
+            ["Circle Starter", "The first hint is near something round—but not the object itself.", ["Hold a mushroom support for 8 seconds", "Show a tight tuck shape on a panel mat", "Practice one safe quarter-circle travel", "Do five shoulder taps in a strong support", "Hold a hollow shape with toes pointed"]],
+            ["Compass Quest", "Your star is on the side where hands press and circles begin.", ["Make two controlled support steps", "Practice a leg swing with coach support", "Show a strong front support finish", "Do three shape changes: tuck, straddle, tuck", "Travel around a cone with tight arms"]],
+            ["Champion Finish", "Look low, beside the mushroom station, near a place equipment rests.", ["Stick a support dismount shape", "Hold a straddle support for 5 seconds", "Show a safe pike fold and reach", "Complete a coach-approved circle drill", "Finish with a salute and tight feet"]]
+          ],
+          "Rings": [
+            ["Strong Stars", "A star is waiting near a place that hangs in the air.", ["Hold a tuck hang for 5 seconds", "Make a clean hollow hold on the floor", "Show a tight straight-body hang shape", "Do five safe body rocks on a mat", "Hold a support shape with coach help"]],
+            ["Swing Signals", "The clue points to a spot below something that can swing.", ["Practice a gentle swing shape", "Show a long-body finish", "Do three controlled dish rocks", "Hold a candle shape for 5 seconds", "Practice a safe landing position"]],
+            ["Ring Ready", "Search near the safe landing area for the hanging station.", ["Hang with straight arms for 5 seconds", "Show a strong lunge and salute", "Complete a safe ring station circuit", "Hold a body-tight shape on a mat", "Finish a coach-approved strength task"]]
+          ],
+          "Vault": [
+            ["Runway Ready", "Your star is somewhere near a path made for running.", ["Run with quick, quiet steps", "Show a hurdle shape over a line", "Stick a two-foot landing", "Make a strong board punch shape", "Hold a lunge with arms by ears"]],
+            ["Takeoff Trail", "Look close to where two feet leave the floor together.", ["Do three rebound jumps in control", "Practice arm swing to a stick", "Step to a safe board shape", "Jump to a panel mat with bent knees", "Show a tall finish position"]],
+            ["Landing Detective", "Your mini object is near the soft place that catches a vault landing.", ["Land on a target with quiet feet", "Complete a coach-approved vault drill", "Jump and freeze in a tight finish", "Show a safe forward landing shape", "Finish a runway challenge"]]
+          ],
+          "P-Bars": [
+            ["Support Scout", "A tiny star is near two long rails that run side by side.", ["Hold a front support shape", "Do five safe support walks", "Show a hollow on the floor", "Practice a pike sit with straight legs", "Make a strong shoulder shape"]],
+            ["Rail Route", "Look near the end of a rail, but stay outside the safety zone.", ["Practice a safe swing shape", "Hold a support position for 5 seconds", "Travel between two floor markers", "Show a tight-body dismount finish", "Complete a coach-approved bar drill"]],
+            ["Parallel Prize", "The object is resting near the landing mat for the parallel bars.", ["Stick a bar-station landing", "Show a clean salute", "Hold a strong tuck support", "Finish a safe strength station", "Do a coach-approved P-bar circuit"]]
+          ],
+          "High Bar": [
+            ["Hang Hunt", "A tiny star is near the tallest station in the gym.", ["Hang with a long body for 5 seconds", "Do five controlled body rocks", "Show a tight hollow hold", "Practice a safe bar landing", "Hold a superhero finish"]],
+            ["Swing Search", "Your next hint is below a place where a gymnast can swing forward and back.", ["Practice a beat swing shape", "Make a straight-arm hang", "Do three safe kick drills", "Complete a coach-approved bar task", "Show a tight dismount position"]],
+            ["Sky Star", "Search safely beside the high-bar landing area—not on the equipment.", ["Stick a safe landing", "Hold a strong body shape", "Finish a high-bar station circuit", "Practice a clean salute", "Complete a coach-approved challenge"]]
+          ]
+        };
+        return data[eventName];
+      }
+
+      function makeRounds(eventName) {
+        return missionData(eventName).map(function (item) {
+          var tasks = item[2].slice();
+          return {
+            id: id("round"),
+            title: item[0],
+            clue: item[1],
+            tasks: tasks,
+            taskPool: tasks.map(function (text) { return { id: id("task"), text: text }; }),
+            taskSetsGenerated: false,
+            studentTasks: {}
+          };
+        });
+      }
+
+      function makeHunt(eventName, title, athletes) {
+        var hunt = {
+          id: id("hunt"),
+          title: title || eventName + " • Day 1",
+          objectName: "mini yellow star",
+          coachLocation: "",
+          roundDuration: 10,
+          pointValue: 1,
+          status: "draft",
+          rounds: makeRounds(eventName),
+          revealedRoundIds: [],
+          completions: {},
+          assignments: {},
+          winner: null
+        };
+        hunt.rounds.forEach(function (round) { normalizeRound(round, athletes || []); });
+        return hunt;
+      }
+
+      function shuffle(items) {
+        var result = items.slice();
+        for (var index = result.length - 1; index > 0; index -= 1) {
+          var swapIndex = Math.floor(Math.random() * (index + 1));
+          var temporary = result[index];
+          result[index] = result[swapIndex];
+          result[swapIndex] = temporary;
+        }
+        return result;
+      }
+
+      function taskPoolFrom(pool, fallbackTasks) {
+        var source = Array.isArray(pool) ? pool : (Array.isArray(fallbackTasks) ? fallbackTasks : []);
+        return source.filter(function (task) {
+          return typeof task === "string" || (task && typeof task.text === "string");
+        }).map(function (task) {
+          return {
+            id: task && typeof task === "object" && task.id ? String(task.id) : id("task"),
+            text: typeof task === "string" ? task : task.text
+          };
+        });
+      }
+
+      function cloneTaskPool(pool) {
+        return taskPoolFrom(pool, []).map(function (task) { return { id: id("task"), text: task.text }; });
+      }
+
+      function indexesForTaskIds(pool, taskIds) {
+        return (Array.isArray(taskIds) ? taskIds : []).map(function (taskId) {
+          return pool.map(function (task) { return task.id; }).indexOf(taskId);
+        }).filter(function (index, position, indexes) {
+          return index !== -1 && indexes.indexOf(index) === position;
+        });
+      }
+
+      function taskTextKey(text) { return String(text == null ? "" : text).trim().replace(/\s+/g, " ").toLowerCase(); }
+
+      function taskIdsForTexts(pool, texts) {
+        var keys = (Array.isArray(texts) ? texts : []).map(taskTextKey);
+        return pool.filter(function (task) { return keys.indexOf(taskTextKey(task.text)) !== -1; }).map(function (task) { return task.id; });
+      }
+
+      function mapTaskIdsBetweenPools(sourcePool, sourceIds, targetPool) {
+        return taskIdsForTexts(targetPool, indexesForTaskIds(sourcePool, sourceIds).map(function (index) { return sourcePool[index].text; }));
+      }
+
+      function mergeTaskPools(basePool, extraPools) {
+        var merged = [];
+        var seen = {};
+        function addTasks(pool) {
+          taskPoolFrom(pool, []).forEach(function (task) {
+            var key = taskTextKey(task.text);
+            if (Object.prototype.hasOwnProperty.call(seen, key)) return;
+            seen[key] = true;
+            merged.push({ id: task.id || id("task"), text: task.text });
+          });
+        }
+        addTasks(basePool);
+        (extraPools || []).forEach(addTasks);
+        return merged;
+      }
+
+      function eligibleTasks(round, taskList) {
+        var eligibleIds = Array.isArray(taskList.eligibleTaskIds) ? taskList.eligibleTaskIds : [];
+        return round.taskPool.filter(function (task) { return eligibleIds.indexOf(task.id) !== -1; });
+      }
+
+      function uniqueTasks(tasks) {
+        var seen = {};
+        return (tasks || []).filter(function (task) {
+          var key = taskTextKey(task && task.text) || "__blank-task__";
+          if (Object.prototype.hasOwnProperty.call(seen, key)) return false;
+          seen[key] = true;
+          return true;
+        });
+      }
+
+      function uniqueEligibleTasks(round, taskList) {
+        return uniqueTasks(eligibleTasks(round, taskList));
+      }
+
+      function uniqueSelectedTaskIds(round, taskIds) {
+        var allowedIds = round.taskPool.map(function (task) { return task.id; });
+        var seenIds = {};
+        var seenTexts = {};
+        return (Array.isArray(taskIds) ? taskIds : []).filter(function (taskId) {
+          if (allowedIds.indexOf(taskId) === -1 || Object.prototype.hasOwnProperty.call(seenIds, taskId)) return false;
+          var task = round.taskPool.filter(function (item) { return item.id === taskId; })[0];
+          var key = taskTextKey(task && task.text) || "__blank-task__";
+          if (Object.prototype.hasOwnProperty.call(seenTexts, key)) return false;
+          seenIds[taskId] = true;
+          seenTexts[key] = true;
+          return true;
+        });
+      }
+
+      function randomizeTasks(round, taskList, resetReshuffles) {
+        var pool = uniqueEligibleTasks(round, taskList);
+        if (pool.length < 3) {
+          taskList.selectedTaskIds = [];
+          taskList.completedTaskIds = [];
+          taskList.hintRevealed = false;
+          taskList.adminOverride = false;
+          return false;
+        }
+        taskList.selectedTaskIds = shuffle(pool).slice(0, 3).map(function (task) { return task.id; });
+        taskList.completedTaskIds = [];
+        taskList.hintRevealed = false;
+        taskList.adminOverride = false;
+        round.taskSetsGenerated = true;
+        if (resetReshuffles) taskList.reshuffles = 0;
+        return true;
+      }
+
+      function normalizeAthletePlan(taskList, round, fallbackEligibleIds, legacyPlan) {
+        var saved = taskList && typeof taskList === "object" && !Array.isArray(taskList) ? taskList : null;
+        var legacy = legacyPlan || {};
+        var sourcePool = saved && Array.isArray(saved.taskPool) ? taskPoolFrom(saved.taskPool, []) : round.taskPool;
+        var plan = {
+          eligibleTaskIds: [],
+          selectedTaskIds: [],
+          completedTaskIds: [],
+          reshuffles: saved && typeof saved.reshuffles === "number" ? saved.reshuffles : (typeof legacy.reshuffles === "number" ? legacy.reshuffles : 0),
+          hintRevealed: !!(saved && saved.hintRevealed),
+          adminOverride: !!(saved && saved.adminOverride)
+        };
+        if (saved && Array.isArray(saved.eligibleTaskIds)) {
+          plan.eligibleTaskIds = mapTaskIdsBetweenPools(sourcePool, saved.eligibleTaskIds, round.taskPool);
+        } else if (saved && Array.isArray(saved.taskPool)) {
+          plan.eligibleTaskIds = taskIdsForTexts(round.taskPool, sourcePool.map(function (task) { return task.text; }));
+        } else if (Array.isArray(fallbackEligibleIds)) {
+          plan.eligibleTaskIds = fallbackEligibleIds.slice();
+        } else {
+          plan.eligibleTaskIds = round.taskPool.map(function (task) { return task.id; });
+        }
+        var selectedIds = saved && Array.isArray(saved.selectedTaskIds) ? saved.selectedTaskIds : (Array.isArray(legacy.selectedTaskIds) ? legacy.selectedTaskIds : []);
+        var completedIds = saved && Array.isArray(saved.completedTaskIds) ? saved.completedTaskIds : (Array.isArray(legacy.completedTaskIds) ? legacy.completedTaskIds : []);
+        plan.selectedTaskIds = mapTaskIdsBetweenPools(sourcePool, selectedIds, round.taskPool);
+        plan.completedTaskIds = mapTaskIdsBetweenPools(sourcePool, completedIds, round.taskPool);
+        var validIds = round.taskPool.map(function (task) { return task.id; });
+        plan.eligibleTaskIds = plan.eligibleTaskIds.filter(function (taskId, index, ids) {
+          return validIds.indexOf(taskId) !== -1 && ids.indexOf(taskId) === index;
+        });
+        plan.selectedTaskIds = uniqueSelectedTaskIds(round, plan.selectedTaskIds.filter(function (taskId) {
+          return plan.eligibleTaskIds.indexOf(taskId) !== -1;
+        })).slice(0, 3);
+        plan.completedTaskIds = plan.completedTaskIds.filter(function (taskId, index, ids) {
+          return plan.selectedTaskIds.indexOf(taskId) !== -1 && ids.indexOf(taskId) === index;
+        });
+        if (uniqueEligibleTasks(round, plan).length < 3) {
+          plan.selectedTaskIds = [];
+          plan.completedTaskIds = [];
+          plan.hintRevealed = false;
+        }
+        return plan;
+      }
+
+      function newAthletePlan(round, eligibleTaskIds) {
+        return normalizeAthletePlan({ eligibleTaskIds: eligibleTaskIds || round.taskPool.map(function (task) { return task.id; }) }, round, eligibleTaskIds);
+      }
+
+      function templateTaskTexts(template) {
+        var source = Array.isArray(template && template.eligibleTaskTexts) ? template.eligibleTaskTexts :
+          (Array.isArray(template && template.tasks) ? template.tasks : (Array.isArray(template && template.taskPool) ? template.taskPool : []));
+        return taskPoolFrom(source, []).map(function (task) { return task.text; });
+      }
+
+      function normalizeEligibilityTemplates(templates, taskPool) {
+        return (Array.isArray(templates) ? templates : []).filter(function (template) {
+          return template && typeof template.athleteName === "string";
+        }).map(function (template) {
+          return {
+            athleteName: template.athleteName,
+            eligibleTaskTexts: taskIdsForTexts(taskPool, templateTaskTexts(template)).map(function (taskId) {
+              return taskPool.filter(function (task) { return task.id === taskId; })[0].text;
+            })
+          };
+        });
+      }
+
+      function eligibilityTemplateFor(templates, athlete) {
+        return (templates || []).filter(function (template) { return template.athleteName === athlete.name; })[0];
+      }
+
+      function eligibleTaskTextsForPlan(taskList, sharedPool) {
+        var list = taskList && typeof taskList === "object" ? taskList : {};
+        var sourcePool = Array.isArray(list.taskPool) ? taskPoolFrom(list.taskPool, []) : sharedPool;
+        var sourceIds = Array.isArray(list.eligibleTaskIds) ? list.eligibleTaskIds :
+          (Array.isArray(list.taskPool) ? sourcePool.map(function (task) { return task.id; }) : sharedPool.map(function (task) { return task.id; }));
+        return indexesForTaskIds(sourcePool, sourceIds).map(function (index) { return sourcePool[index].text; });
+      }
+
+      function normalizeRound(round, athletes) {
+        var savedStudentTasks = round.studentTasks && typeof round.studentTasks === "object" && !Array.isArray(round.studentTasks) ? round.studentTasks : {};
+        var savedTaskSetsGenerated = typeof round.taskSetsGenerated === "boolean" ? round.taskSetsGenerated : null;
+        var rawTemplates = (Array.isArray(round.eligibilityTemplates) ? round.eligibilityTemplates : []).concat(Array.isArray(round.athleteTaskTemplates) ? round.athleteTaskTemplates : []);
+        var extraPools = Object.keys(savedStudentTasks).map(function (athleteId) {
+          return savedStudentTasks[athleteId] && savedStudentTasks[athleteId].taskPool;
+        }).concat(rawTemplates.map(templateTaskTexts));
+        round.taskPool = mergeTaskPools(taskPoolFrom(round.taskPool, round.tasks), extraPools);
+        round.tasks = round.taskPool.map(function (task) { return task.text; });
+        if (typeof round.clue !== "string") round.clue = "";
+        var legacySelectedIds = Array.isArray(round.selectedTaskIds) ? round.selectedTaskIds.slice() : [];
+        var legacyCompletedIds = Array.isArray(round.completedTaskIds) ? round.completedTaskIds.slice() : [];
+        var legacyReshuffles = typeof round.reshuffles === "number" ? round.reshuffles : 0;
+        round.eligibilityTemplates = normalizeEligibilityTemplates(rawTemplates, round.taskPool);
+        round.athleteTaskTemplates = [];
+        round.studentTasks = {};
+        (athletes || []).forEach(function (athlete) {
+          var template = eligibilityTemplateFor(round.eligibilityTemplates, athlete);
+          var fallbackEligibleIds = template ? taskIdsForTexts(round.taskPool, template.eligibleTaskTexts) : round.taskPool.map(function (task) { return task.id; });
+          round.studentTasks[athlete.id] = normalizeAthletePlan(savedStudentTasks[athlete.id], round, fallbackEligibleIds, {
+            selectedTaskIds: legacySelectedIds,
+            completedTaskIds: legacyCompletedIds,
+            reshuffles: legacyReshuffles
+          });
+        });
+        round.selectedTaskIds = [];
+        round.completedTaskIds = [];
+        round.reshuffles = 0;
+        round.taskSetsGenerated = savedTaskSetsGenerated === true || (athletes || []).some(function (athlete) {
+          return round.studentTasks[athlete.id].selectedTaskIds.length === 3;
+        });
+        return round;
+      }
+
+      function freshRoundCopy(sourceRound, athletes, preserveStudentLists) {
+        var source = sourceRound || {};
+        var sourcePool = taskPoolFrom(source.taskPool, source.tasks);
+        var freshRound = {
+          id: id("round"),
+          title: typeof source.title === "string" ? source.title : "Hint Round",
+          clue: typeof source.clue === "string" ? source.clue : "",
+          tasks: sourcePool.map(function (task) { return task.text; }),
+          taskPool: cloneTaskPool(sourcePool),
+          taskSetsGenerated: false,
+          studentTasks: {},
+          eligibilityTemplates: normalizeEligibilityTemplates((Array.isArray(source.eligibilityTemplates) ? source.eligibilityTemplates : []).concat(Array.isArray(source.athleteTaskTemplates) ? source.athleteTaskTemplates : []), sourcePool)
+        };
+        (athletes || []).forEach(function (athlete) {
+          var sourceList = preserveStudentLists && source.studentTasks && source.studentTasks[athlete.id];
+          var template = eligibilityTemplateFor(freshRound.eligibilityTemplates, athlete);
+          var eligibleTexts = sourceList ? eligibleTaskTextsForPlan(sourceList, sourcePool) : (template ? template.eligibleTaskTexts : freshRound.taskPool.map(function (task) { return task.text; }));
+          freshRound.studentTasks[athlete.id] = { eligibleTaskIds: taskIdsForTexts(freshRound.taskPool, eligibleTexts) };
+        });
+        return normalizeRound(freshRound, athletes || []);
+      }
+
+      function lessonRoundCopy(sourceRound, classRoom) {
+        var lessonRound = freshRoundCopy(sourceRound, [], false);
+        lessonRound.eligibilityTemplates = classRoom.athletes.map(function (athlete) {
+          var sourceList = sourceRound.studentTasks && sourceRound.studentTasks[athlete.id];
+          return { athleteName: athlete.name, eligibleTaskTexts: eligibleTaskTextsForPlan(sourceList, sourceRound.taskPool) };
+        });
+        return normalizeRound(lessonRound, []);
+      }
+
+      function normalizeState(candidate) {
+        candidate.schemaVersion = 5;
+        candidate.mode = candidate.mode === "play" ? "play" : "admin";
+        candidate.classes.forEach(function (classRoom) {
+          classRoom.events.forEach(function (event) {
+            event.hunts.forEach(function (hunt) {
+              hunt.revealedRoundIds = Array.isArray(hunt.revealedRoundIds) ? hunt.revealedRoundIds : [];
+              hunt.rounds.forEach(function (round) { normalizeRound(round, classRoom.athletes); });
+              hunt.rounds.forEach(function (round) {
+                if (teamTasksComplete(round, classRoom) && hunt.revealedRoundIds.indexOf(round.id) === -1) hunt.revealedRoundIds.push(round.id);
+              });
+            });
+          });
+        });
+        candidate.lessonTemplates.forEach(function (lesson) {
+          lesson.rounds.forEach(function (round) { normalizeRound(round, []); });
+        });
+        return candidate;
+      }
+
+      function makeClass(name, athleteNames, eventNames) {
+        var athletes = athleteNames.map(function (athleteName) { return { id: id("athlete"), name: athleteName }; });
+        return {
+          id: id("class"),
+          name: name,
+          athletes: athletes,
+          events: eventNames.map(function (eventName) {
+            return { id: id("event"), name: eventName, hunts: [makeHunt(eventName, eventName + " • Day 1", athletes)] };
+          })
+        };
+      }
+
+      function seed() {
+        var campClass = makeClass("Camp Explorers", ["Avery", "Kai", "Mason", "Noah", "Riley"], EVENTS);
+        var mushroom = campClass.events.filter(function (event) { return event.name === "Mushroom"; })[0];
+        mushroom.hunts[0].status = "active";
+        mushroom.hunts[0].coachLocation = "Coach-only example: behind the folded panel mat by Mushroom.";
+        return {
+          schemaVersion: 5,
+          mode: "admin",
+          campName: "Gymnastics Scavenger Hunt",
+          classes: [campClass],
+          lessonTemplates: [
+            { id: id("lesson"), title: "Mushroom Mini Missions", eventName: "Mushroom", rounds: makeRounds("Mushroom") },
+            { id: id("lesson"), title: "Floor Star Trail", eventName: "Floor", rounds: makeRounds("Floor") },
+            { id: id("lesson"), title: "Vault Takeoff Quest", eventName: "Vault", rounds: makeRounds("Vault") }
+          ]
+        };
+      }
+
+      function valid(candidate) {
+        return candidate &&
+          (candidate.schemaVersion === 1 || candidate.schemaVersion === 2 || candidate.schemaVersion === 3 || candidate.schemaVersion === 4 || candidate.schemaVersion === 5) &&
+          typeof candidate.campName === "string" &&
+          Array.isArray(candidate.classes) &&
+          candidate.classes.length &&
+          candidate.classes.every(function (classRoom) {
+            return classRoom && Array.isArray(classRoom.athletes) && classRoom.athletes.length && Array.isArray(classRoom.events) && classRoom.events.length &&
+              classRoom.events.every(function (event) { return Array.isArray(event.hunts) && event.hunts.length; });
+          }) &&
+          Array.isArray(candidate.lessonTemplates);
+      }
+
+      function load() {
+        try {
+          var saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+          if (valid(saved)) {
+            if (saved.campName === "Summer Star Search") saved.campName = "Gymnastics Scavenger Hunt";
+            return normalizeState(saved);
+          }
+        } catch (error) {
+          /* use a fresh camp */
+        }
+        return seed();
+      }
+
+      var state = normalizeState(load());
+      var startingEvent = state.classes[0].events.filter(function (event) { return event.name === "Mushroom"; })[0] || state.classes[0].events[0];
+      var active = {
+        classId: state.classes[0].id,
+        eventId: startingEvent.id,
+        huntId: startingEvent.hunts[0].id,
+        round: 0,
+        athleteId: state.classes[0].athletes[0].id
+      };
+
+      function byId(name) { return document.getElementById(name); }
+      function currentClass() { return state.classes.filter(function (classRoom) { return classRoom.id === active.classId; })[0] || state.classes[0]; }
+      function currentEvent() { var classRoom = currentClass(); return classRoom.events.filter(function (event) { return event.id === active.eventId; })[0] || classRoom.events[0]; }
+      function currentHunt() { var event = currentEvent(); return event.hunts.filter(function (hunt) { return hunt.id === active.huntId; })[0] || event.hunts[0]; }
+      function currentRound() { var hunt = currentHunt(); return hunt.rounds[active.round] || hunt.rounds[0]; }
+      function currentAthlete() {
+        var classRoom = currentClass();
+        var athlete = classRoom.athletes.filter(function (item) { return item.id === active.athleteId; })[0] || classRoom.athletes[0];
+        active.athleteId = athlete.id;
+        return athlete;
+      }
+      function athleteForId(athleteId) {
+        var classRoom = currentClass();
+        return classRoom.athletes.filter(function (item) { return item.id === athleteId; })[0] || currentAthlete();
+      }
+      function taskListFor(round, athleteId) {
+        round.studentTasks = round.studentTasks || {};
+        if (!round.studentTasks[athleteId]) round.studentTasks[athleteId] = newAthletePlan(round);
+        return round.studentTasks[athleteId];
+      }
+      function currentTaskList() { return taskListFor(currentRound(), currentAthlete().id); }
+      function isAdmin() { return state.mode !== "play"; }
+      function isAdminAction(action) {
+        return [
+          "new-class", "new-hunt", "lessons", "settings", "finder", "event", "hunt",
+          "reveal-clue", "toggle-secret", "archive", "save-lesson", "load-lesson", "export",
+          "import", "reset-step-one", "reset-step-two", "admin-randomize", "clear-task-progress",
+          "add-task", "delete-task", "start-play"
+        ].indexOf(action) !== -1;
+      }
+      function selectedTasks(round, taskList) {
+        return taskList.selectedTaskIds.map(function (taskId) {
+          return round.taskPool.filter(function (task) { return task.id === taskId; })[0];
+        }).filter(Boolean);
+      }
+      function completedTaskCount(taskList) {
+        return taskList.completedTaskIds.filter(function (taskId) { return taskList.selectedTaskIds.indexOf(taskId) !== -1; }).length;
+      }
+      function hintOpen(hunt, round) {
+        return hunt.revealedRoundIds.indexOf(round.id) !== -1;
+      }
+      function allTasksComplete(taskList) {
+        return taskList.selectedTaskIds.length === 3 && taskList.selectedTaskIds.every(function (taskId) {
+          return taskList.completedTaskIds.indexOf(taskId) !== -1;
+        });
+      }
+      function completedAthleteCount(round, classRoom) {
+        return classRoom.athletes.filter(function (student) {
+          return allTasksComplete(taskListFor(round, student.id));
+        }).length;
+      }
+      function teamTasksComplete(round, classRoom) {
+        return completedAthleteCount(round, classRoom) > 0;
+      }
+      function prepareTeamRound(hunt, round, classRoom, forceNewSets) {
+        var makeFreshSets = forceNewSets || !round.taskSetsGenerated;
+        var unavailableAthlete = classRoom.athletes.filter(function (student) {
+          return uniqueEligibleTasks(round, taskListFor(round, student.id)).length < 3;
+        })[0];
+        if (unavailableAthlete) return false;
+        classRoom.athletes.forEach(function (student) {
+          var plan = taskListFor(round, student.id);
+          var keepAdminSet = makeFreshSets && plan.adminOverride && plan.selectedTaskIds.length === 3;
+          if (!keepAdminSet && (makeFreshSets || plan.selectedTaskIds.length !== 3)) randomizeTasks(round, plan, true);
+        });
+        round.taskSetsGenerated = true;
+        return true;
+      }
+      function prepareNextTeamRound(hunt, round, classRoom) {
+        var roundIndex = hunt.rounds.indexOf(round);
+        if (roundIndex === -1 || roundIndex >= hunt.rounds.length - 1) return false;
+        prepareTeamRound(hunt, hunt.rounds[roundIndex + 1], classRoom, true);
+        return true;
+      }
+      function openTeamHintIfComplete(hunt, round, classRoom) {
+        if (!teamTasksComplete(round, classRoom) || hintOpen(hunt, round)) return false;
+        hunt.revealedRoundIds.push(round.id);
+        prepareNextTeamRound(hunt, round, classRoom);
+        return true;
+      }
+      function moveToNextTaskSet(hunt, round, classRoom) {
+        var roundIndex = hunt.rounds.indexOf(round);
+        if (roundIndex === -1 || roundIndex >= hunt.rounds.length - 1) return false;
+        active.round = roundIndex + 1;
+        prepareTeamRound(hunt, currentRound(), classRoom, false);
+        resetTimer();
+        return true;
+      }
+      function firstLockedRound(hunt, athleteId) {
+        var index = hunt.rounds.findIndex(function (item) {
+          return !hintOpen(hunt, item);
+        });
+        return index === -1 ? Math.max(0, hunt.rounds.length - 1) : index;
+      }
+      function allAthletesHintOpen(hunt, round, classRoom) {
+        return hintOpen(hunt, round);
+      }
+
+      function save(message) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          byId("save-status").innerHTML = "<b>●</b> " + esc(message || "Saved on this device");
+        } catch (error) {
+          byId("save-status").innerHTML = "<b style=\"color:#a90000\">●</b> Browser storage is unavailable";
+        }
+      }
+
+      function toast(message) {
+        var node = byId("toast");
+        node.textContent = "✦ " + message;
+        node.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { node.classList.remove("show"); }, 3200);
+      }
+
+      function resetTimer() {
+        timer.running = false;
+        timer.seconds = currentHunt().roundDuration * 60;
+      }
+
+      function activateHunt(hunt) {
+        active.huntId = hunt.id;
+        active.round = 0;
+        secretVisible = false;
+        resetTimer();
+      }
+
+      function starBoard() {
+        var totals = {};
+        state.classes.forEach(function (classRoom) {
+          classRoom.athletes.forEach(function (athlete) {
+            totals[athlete.id] = { name: athlete.name, stars: 0, finds: 0 };
+          });
+          classRoom.events.forEach(function (event) {
+            event.hunts.forEach(function (hunt) {
+              if (hunt.winner && totals[hunt.winner.athleteId]) {
+                totals[hunt.winner.athleteId].stars += Number(hunt.winner.points || 0);
+                totals[hunt.winner.athleteId].finds += 1;
+              }
+            });
+          });
+        });
+        return Object.keys(totals).map(function (key) { return totals[key]; }).filter(function (entry) {
+          return entry.stars || entry.finds;
+        }).sort(function (a, b) {
+          return b.stars - a.stars || b.finds - a.finds || a.name.localeCompare(b.name);
+        });
+      }
+
+      function sharedTaskTableHtml(round, classRoom, activeAthlete) {
+        var activePlan = taskListFor(round, activeAthlete.id);
+        var athleteHeaders = classRoom.athletes.map(function (student) {
+          return "<th class=\"eligibility-head\" title=\"Checked means this shared task can be randomly generated for " + esc(student.name) + "\">" + esc(student.name) + "</th>";
+        }).join("");
+        var rows = round.taskPool.map(function (task, index) {
+          var eligibleCells = classRoom.athletes.map(function (student) {
+            var plan = taskListFor(round, student.id);
+            var eligible = plan.eligibleTaskIds.indexOf(task.id) !== -1;
+            return "<td class=\"eligibility-cell\"><input type=\"checkbox\" data-task-eligible=\"" + esc(task.id) + "\" data-athlete=\"" + esc(student.id) + "\"" + (eligible ? " checked" : "") + " aria-label=\"Allow " + esc(task.text) + " for " + esc(student.name) + "\"></td>";
+          }).join("");
+          var selected = activePlan.selectedTaskIds.indexOf(task.id) !== -1;
+          var done = activePlan.completedTaskIds.indexOf(task.id) !== -1;
+          var activeEligible = activePlan.eligibleTaskIds.indexOf(task.id) !== -1;
+          return "<tr><td>" + (index + 1) + "</td><td><input type=\"text\" data-task-text=\"" + esc(task.id) + "\" value=\"" + esc(task.text) + "\" aria-label=\"Shared task " + (index + 1) + "\"></td>" + eligibleCells + "<td class=\"override-cell\"><input type=\"checkbox\" data-task-select=\"" + esc(task.id) + "\"" + (selected ? " checked" : "") + (activeEligible ? "" : " disabled") + " aria-label=\"Include task " + (index + 1) + " in " + esc(activeAthlete.name) + "'s play set\"></td><td class=\"override-cell\"><input type=\"checkbox\" data-task-done=\"" + esc(task.id) + "\"" + (done ? " checked" : "") + (selected ? "" : " disabled") + " aria-label=\"Mark task " + (index + 1) + " done for " + esc(activeAthlete.name) + "\"></td><td><button class=\"mini-button\" data-action=\"delete-task\" data-task-id=\"" + esc(task.id) + "\" aria-label=\"Delete task " + (index + 1) + "\">×</button></td></tr>";
+        }).join("");
+        var eligibleCount = uniqueEligibleTasks(round, activePlan).length;
+        return "<div class=\"task-table-wrap\" role=\"region\" aria-label=\"Shared task eligibility matrix\" tabindex=\"0\"><table class=\"task-table eligibility-table\"><thead><tr><th>#</th><th>SHARED PRELOADED TASK</th>" + athleteHeaders + "<th class=\"override-cell\" title=\"" + esc(activeAthlete.name) + " current play set\">SET</th><th class=\"override-cell\" title=\"" + esc(activeAthlete.name) + " completed tasks\">DONE</th><th>×</th></tr></thead><tbody>" + rows + "</tbody></table></div><div class=\"task-controls\"><small><b>CHECKED NAME = CAN GENERATE.</b> " + esc(activeAthlete.name) + " has " + eligibleCount + " different eligible task" + (eligibleCount === 1 ? "" : "s") + " and " + activePlan.selectedTaskIds.length + " / 3 in the current set. Scroll the matrix—the task columns and header stay pinned.</small><div><button class=\"mini-button\" data-action=\"add-task\">＋ ADD SHARED TASK</button></div></div>";
+      }
+
+      function playRosterHtml(hunt, round, classRoom) {
+        var sharedHintOpen = hintOpen(hunt, round);
+        var readyAthletes = completedAthleteCount(round, classRoom);
+        return "<div class=\"play-roster-grid\">" + classRoom.athletes.map(function (student) {
+          var plan = taskListFor(round, student.id);
+          var picked = selectedTasks(round, plan);
+          var completeCount = completedTaskCount(plan);
+          var reshufflesLeft = Math.max(0, 3 - plan.reshuffles);
+          var cards = picked.length ? picked.map(function (task, index) {
+            var done = plan.completedTaskIds.indexOf(task.id) !== -1;
+            return "<div class=\"task-card " + (done ? "done" : "") + "\"><button data-action=\"complete-task\" data-athlete=\"" + esc(student.id) + "\" data-task-id=\"" + esc(task.id) + "\" aria-label=\"Mark " + esc(student.name) + " task " + (index + 1) + " " + (done ? "incomplete" : "complete") + "\">" + (done ? "★" : "☆") + "</button><div><small>TASK " + (index + 1) + " OF 3</small><strong>" + esc(task.text) + "</strong></div></div>";
+          }).join("") : "<p class=\"empty\">This student needs at least three checked tasks.</p>";
+          return "<section class=\"athlete-mission\"><div class=\"athlete-mission-head\"><b>★ " + esc(student.name) + "</b><small>" + completeCount + " / 3 DONE</small></div>" + cards + "<div class=\"athlete-mission-footer\"><small>RESHUFFLES: " + plan.reshuffles + " / 3</small><button class=\"mini-button\" data-action=\"reshuffle\" data-athlete=\"" + esc(student.id) + "\"" + (plan.reshuffles >= 3 || completeCount > 0 || picked.length !== 3 ? " disabled" : "") + ">↺ " + reshufflesLeft + " LEFT</button></div><div class=\"player-hint " + (sharedHintOpen ? "open" : "") + "\"><b>" + (sharedHintOpen ? "✦ SHARED HINT READY" : "★ ANY ATHLETE CAN UNLOCK THE HINT") + "</b><p>" + (sharedHintOpen ? "See the shared class hint below the team board." : "One athlete finishing their own three tasks opens the shared hint for everyone.") + "</p></div></section>";
+        }).join("") + "</div>";
+      }
+
+      function render() {
+        var classRoom = currentClass();
+        var event = currentEvent();
+        var hunt = currentHunt();
+        var round = currentRound();
+        var athlete = currentAthlete();
+        var taskList = taskListFor(round, athlete.id);
+        var playing = !isAdmin();
+        var pickedTasks = selectedTasks(round, taskList);
+        var clueOpen = hintOpen(hunt, round);
+        var completeCount = completedTaskCount(taskList);
+        var teamReadyCount = completedAthleteCount(round, classRoom);
+        var allHintsOpen = allAthletesHintOpen(hunt, round, classRoom);
+        var globalClueRevealed = hunt.revealedRoundIds.indexOf(round.id) !== -1;
+        var totalCompleted = classRoom.athletes.reduce(function (total, student) {
+          return total + completedTaskCount(taskListFor(round, student.id));
+        }, 0);
+        var board = starBoard();
+        var winner = hunt.winner ? classRoom.athletes.filter(function (athlete) { return athlete.id === hunt.winner.athleteId; })[0] : null;
+
+        byId("app-body").classList.toggle("play-mode", playing);
+        byId("mode-badge").textContent = playing ? "PLAY MODE" : "ADMIN MODE";
+        byId("mission-title").textContent = playing ? "PLAY MODE · ALL ATHLETES" : "MISSION CONTROL";
+        byId("mission-status").textContent = playing ? "TEAM · " + teamReadyCount + " ATHLETE" + (teamReadyCount === 1 ? "" : "S") + " READY" : "EDITING " + athlete.name.toUpperCase();
+        byId("camp-label").textContent = state.campName.toUpperCase() + " · GYMNASTICS SCAVENGER HUNT SYSTEM";
+        byId("class-select").innerHTML = state.classes.map(function (item) { return option(item.id, item.name, item.id === classRoom.id); }).join("");
+        byId("event-list").innerHTML = classRoom.events.map(function (item) {
+          return "<button class=\"event-button " + (item.id === event.id ? "active" : "") + "\" data-action=\"event\" data-event=\"" + item.id + "\"><span class=\"orb\">●</span><span>" + esc(item.name) + "</span><small>" + item.hunts.length + "</small></button>";
+        }).join("");
+        byId("event-title").textContent = event.name.toUpperCase() + " HUNT SHEETS";
+        byId("hunt-status").textContent = String(hunt.status || "draft").toUpperCase();
+        byId("sheet-tabs").innerHTML = event.hunts.map(function (item) {
+          var label = item.title.replace(event.name + " • ", "");
+          return "<button class=\"sheet-tab " + (item.id === hunt.id ? "active" : "") + "\" data-action=\"hunt\" data-hunt=\"" + item.id + "\">" + esc(label) + (item.winner ? " ★" : "") + "</button>";
+        }).join("") + "<button class=\"sheet-tab add\" data-action=\"new-hunt\">＋ NEW SHEET</button>";
+        byId("path-label").textContent = classRoom.name.toUpperCase() + " / " + event.name.toUpperCase();
+        byId("hunt-title").value = hunt.title;
+        byId("object-name").value = hunt.objectName;
+        byId("round-duration").value = hunt.roundDuration;
+        byId("point-value").value = hunt.pointValue;
+        byId("coach-note").value = hunt.coachLocation;
+        byId("coach-note").classList.toggle("hidden", !secretVisible);
+        byId("sealed-note").classList.toggle("hidden", secretVisible);
+        byId("secret-button").textContent = secretVisible ? "HIDE NOTE" : "SHOW NOTE";
+        byId("finder-button").textContent = "★ " + (hunt.winner ? "CORRECT FINDER" : "RECORD FINDER");
+        byId("archive-button").classList.toggle("hidden", !!hunt.winner || hunt.status === "archived");
+
+        byId("athlete-picker").innerHTML = classRoom.athletes.map(function (item) {
+          var itemTaskList = taskListFor(round, item.id);
+          var itemCompleteCount = completedTaskCount(itemTaskList);
+          return "<button class=\"athlete-tab " + (item.id === athlete.id ? "active" : "") + "\" data-action=\"athlete\" data-athlete=\"" + esc(item.id) + "\"><span class=\"orb\">●</span><strong>" + esc(item.name) + "</strong><small>" + itemCompleteCount + "/3</small></button>";
+        }).join("");
+        byId("round-tabs").innerHTML = hunt.rounds.map(function (item, index) {
+          var opened = hintOpen(hunt, item);
+          var openedCount = completedAthleteCount(item, classRoom);
+          var available = !playing || index === 0 || allAthletesHintOpen(hunt, hunt.rounds[index - 1], classRoom);
+          return "<button class=\"round-tab " + (index === active.round ? "active " : "") + ((playing && opened) || (!playing && opened) ? "open" : "") + "\" data-action=\"round\" data-round=\"" + index + "\"" + (available ? "" : " disabled") + "><b>" + (index + 1) + "</b><span>" + esc(item.title) + "</span><i>" + (playing ? (opened ? "✦" : (openedCount ? "★" : "")) : (opened ? "✦" : "")) + "</i></button>";
+        }).join("");
+        byId("timer-label").textContent = "ROUND " + (active.round + 1) + " TIMER";
+        byId("timer-readout").textContent = Math.floor(timer.seconds / 60) + ":" + String(timer.seconds % 60).padStart(2, "0");
+        byId("timer-readout").classList.toggle("urgent", timer.seconds <= 60);
+        byId("timer-button").textContent = timer.running ? "Ⅱ PAUSE" : "▶ START";
+        byId("task-section-title").textContent = playing ? "ROUND " + (active.round + 1) + " · ALL ATHLETES" : "SHARED TASK ELIGIBILITY";
+        byId("task-section-note").textContent = playing ? "Every athlete's three tasks and checks are visible at once. Any athlete who finishes their three tasks unlocks the shared hint for everyone." : "Check a student's name to let this shared task be randomly generated for them.";
+        if (playing) {
+          byId("task-list").innerHTML = playRosterHtml(hunt, round, classRoom);
+        } else {
+          byId("task-list").innerHTML = sharedTaskTableHtml(round, classRoom, athlete);
+        }
+        byId("clue-box").classList.toggle("open", playing ? allHintsOpen : (globalClueRevealed || clueOpen));
+        byId("clue-label").textContent = playing ? (allHintsOpen ? "✦ SHARED HINT UNLOCKED" : "★ COMPLETE ANY ATHLETE'S 3 TASKS") : (globalClueRevealed ? "✦ HINT LIVE FOR TEAM" : "★ PRELOADED SHARED HINT LOCKED");
+        var showHintText = !playing || allHintsOpen;
+        byId("clue-sealed").classList.toggle("hidden", showHintText);
+        byId("clue-text").classList.toggle("hidden", !showHintText);
+        byId("clue-text").value = showHintText ? round.clue : "";
+        byId("clue-text").readOnly = playing;
+        byId("clue-sealed").textContent = playing ? "This shared hint opens for the whole class when any one athlete completes their three tasks. The next task sets are then ready to go." : "Preload one shared team hint below. It opens for the whole class after any one athlete completes their own three selected tasks.";
+        byId("clue-button").textContent = globalClueRevealed ? "HINT LIVE" : "REVEAL HINT NOW";
+        byId("clue-button").disabled = globalClueRevealed;
+        var hasNextRound = active.round < hunt.rounds.length - 1;
+        byId("next-round-button").classList.toggle("hidden", !playing || !allHintsOpen);
+        byId("next-round-button").textContent = hasNextRound ? "NEXT HINT ROUND" : "FIND THE OBJECT!";
+        byId("next-round-button").disabled = !hasNextRound;
+        byId("play-progress").innerHTML = "<b>" + totalCompleted + " / " + (classRoom.athletes.length * 3) + "</b> task checks complete · any athlete's 3 tasks unlock the shared hint";
+        byId("reshuffle-button").classList.add("hidden");
+
+        byId("round-panel-title").textContent = playing ? "PLAY PROGRESS" : "ADMIN OVERRIDE";
+        byId("round-panel-count").textContent = playing ? teamReadyCount + " READY" : taskList.selectedTaskIds.length + "/3 TASKS";
+        if (playing) {
+          byId("round-panel-content").innerHTML = "<div class=\"stat-box\"><small>ROUND " + (active.round + 1) + " TEAM PROGRESS</small><b>" + totalCompleted + " / " + (classRoom.athletes.length * 3) + "</b></div><p>Everyone works as one team, but only one athlete needs to finish their three tasks to open the shared hint for the whole class. The next sets are generated right away.</p><p><strong>Need admin?</strong> Use EXIT PLAY MODE and enter the PIN.</p>";
+        } else {
+          byId("round-panel-content").innerHTML = "<p>Editing <strong>" + esc(athlete.name) + "</strong>. Admin can override this student's draw, checks, or hint lock.</p><div class=\"stat-box\"><small>CURRENT PLAY SET</small><b>" + taskList.selectedTaskIds.length + " / 3</b></div><button class=\"button blue\" data-action=\"admin-randomize\">↺ RANDOMIZE 3 FOR " + esc(athlete.name.toUpperCase()) + "</button><button class=\"button\" data-action=\"clear-task-progress\">CLEAR " + esc(athlete.name.toUpperCase()) + " CHECKS</button><button class=\"button yellow\" data-action=\"reveal-clue\" " + (globalClueRevealed ? "disabled" : "") + ">" + (globalClueRevealed ? "HINT LIVE" : "REVEAL HINT NOW") + "</button>";
+        }
+
+        byId("star-total").textContent = board.reduce(function (total, item) { return total + item.stars; }, 0);
+        byId("leaderboard").innerHTML = board.length ? board.slice(0, 6).map(function (item, index) {
+          return "<div class=\"score-row\"><span class=\"rank\">" + (index + 1) + "</span><strong>" + esc(item.name) + "</strong><small>" + item.finds + " find" + (item.finds === 1 ? "" : "s") + "</small><b>" + item.stars + " ★</b></div>";
+        }).join("") : "<p class=\"empty\">No stars yet.<br>The first finder will appear here.</p>";
+        byId("finder-summary").innerHTML = winner ?
+          "<b>★</b><p><strong>" + esc(winner.name) + "</strong> found the <em>" + esc(hunt.objectName) + "</em>.</p><small>" + hunt.winner.points + " star" + (hunt.winner.points === 1 ? "" : "s") + " awarded</small>" :
+          "<b style=\"color:#777;text-shadow:none\">☆</b><p>No finder recorded yet.</p><small>Keep the hunt open until someone spots it.</small>";
+      }
+
+      function modalShell(title, body) {
+        return "<section class=\"window modal\" role=\"dialog\" aria-modal=\"true\"><div class=\"titlebar\"><span>★ " + esc(title.toUpperCase()) + "</span><button class=\"button\" data-action=\"close-modal\" aria-label=\"Close dialog\">×</button></div><div class=\"modal-body\">" + body + "</div></section>";
+      }
+
+      function openModal(type) {
+        modal = type;
+        var classRoom = currentClass();
+        var event = currentEvent();
+        var hunt = currentHunt();
+        var html = "";
+        if (type === "new-class") {
+          html = "<form class=\"modal-form\" data-form=\"new-class\"><p>Make a fresh class board with its own athlete roster and event hunt sheets.</p><label><span>CLASS NAME</span><input id=\"new-class-name\" autofocus placeholder=\"Example: Boys Camp 1\"></label><label><span>ATHLETES</span><textarea id=\"new-roster\" placeholder=\"One athlete per line&#10;Avery&#10;Mason&#10;Kai\"></textarea></label><div><span class=\"field-label\">EVENT PAGES</span><div class=\"checkboxes\">" + EVENTS.map(function (name) { return "<label><input type=\"checkbox\" name=\"new-event\" value=\"" + esc(name) + "\" checked> " + esc(name) + "</label>"; }).join("") + "</div></div><div class=\"modal-actions\"><button type=\"button\" class=\"button\" data-action=\"close-modal\">CANCEL</button><button class=\"button blue\" type=\"submit\">CREATE CLASS</button></div></form>";
+        } else if (type === "new-hunt") {
+          html = "<form class=\"modal-form\" data-form=\"new-hunt\"><p>Create another day or object under <strong>" + esc(event.name) + "</strong>. Its history stays separate.</p><label><span>HUNT NAME</span><input id=\"new-hunt-title\" autofocus value=\"" + esc(event.name + " • Day " + (event.hunts.length + 1)) + "\"></label><label style=\"display:block\"><input id=\"copy-setup\" type=\"checkbox\" checked style=\"width:auto\"> Copy the rounds, shared task bank, name checkmarks, and clues <small>(never copies completions or the finder)</small></label><div class=\"modal-actions\"><button type=\"button\" class=\"button\" data-action=\"close-modal\">CANCEL</button><button class=\"button blue\" type=\"submit\">CREATE SHEET</button></div></form>";
+        } else if (type === "lessons") {
+          var lessons = state.lessonTemplates.filter(function (item) { return item.eventName === event.name; });
+          html = "<p>Preloaded <strong>" + esc(event.name) + "</strong> lessons can fill all three rounds in this sheet, including matching students' shared-task eligibility checks. Loading one resets this hunt check-off and finder.</p>" +
+            (lessons.length ? lessons.map(function (lesson) {
+              return "<article class=\"lesson-card\"><div><small>3 × ELIGIBILITY TABLES</small><h3>" + esc(lesson.title) + "</h3><p>" + esc(lesson.rounds.map(function (round) { return round.title; }).join(" · ")) + "</p></div><button class=\"button blue\" data-action=\"load-lesson\" data-lesson=\"" + lesson.id + "\">LOAD</button></article>";
+            }).join("") : "<p class=\"empty\">No saved " + esc(event.name) + " lessons yet.</p>") +
+            "<div class=\"modal-bottom\"><p>Edited this hunt into something you want to reuse?</p><button class=\"button yellow\" data-action=\"save-lesson\">★ SAVE CURRENT AS LESSON</button></div>";
+        } else if (type === "finder") {
+          html = "<form class=\"modal-form\" data-form=\"finder\"><p>" + (hunt.winner ? "Choose the correct finder. The old star award will be replaced." : "Who found the " + esc(hunt.objectName) + "?") + "</p><label><span>FIRST FINDER</span><select id=\"finder-select\">" + classRoom.athletes.map(function (athlete) { return option(athlete.id, athlete.name, hunt.winner && hunt.winner.athleteId === athlete.id); }).join("") + "</select></label><div class=\"modal-bottom\"><p><strong>★ " + hunt.pointValue + "</strong> star" + (hunt.pointValue === 1 ? "" : "s") + " will be recorded.</p></div><div class=\"modal-actions\"><button type=\"button\" class=\"button\" data-action=\"close-modal\">CANCEL</button><button class=\"button yellow\" type=\"submit\">★ CONFIRM FINDER</button></div></form>";
+        } else if (type === "admin-pin") {
+          html = "<form class=\"modal-form\" data-form=\"admin-pin\"><p>Enter the Admin PIN to leave Play Mode and return to editing controls.</p><label><span>ADMIN PIN</span><input id=\"admin-pin\" autofocus inputmode=\"numeric\" type=\"password\" maxlength=\"4\" placeholder=\"••••\"></label><div class=\"modal-actions\"><button type=\"button\" class=\"button\" data-action=\"close-modal\">STAY IN PLAY MODE</button><button class=\"button blue\" type=\"submit\">OPEN ADMIN MODE</button></div></form>";
+        } else if (type === "confirm-finish") {
+          var finishAthlete = pendingFinish && classRoom.athletes.filter(function (student) { return student.id === pendingFinish.athleteId; })[0];
+          if (finishAthlete) {
+            html = "<div class=\"modal-form\"><p><strong>Are you sure " + esc(finishAthlete.name) + " finished all 3 tasks?</strong></p><div class=\"modal-bottom\"><p>Confirming gives the whole class the shared hint and prepares a fresh three-task set for the next hint.</p></div><div class=\"modal-actions\"><button type=\"button\" class=\"button\" data-action=\"close-modal\">NOT YET</button><button type=\"button\" class=\"button yellow\" data-action=\"confirm-finish\">★ CONFIRM FINISHED</button></div></div>";
+          } else {
+            html = "<div class=\"modal-form\"><p>This task check is no longer available.</p><div class=\"modal-actions\"><button type=\"button\" class=\"button\" data-action=\"close-modal\">CLOSE</button></div></div>";
+          }
+        } else if (type === "shared-hint") {
+          var hintRound = pendingSharedHint && hunt.rounds.filter(function (item) { return item.id === pendingSharedHint.roundId; })[0];
+          var hintAthlete = pendingSharedHint && classRoom.athletes.filter(function (student) { return student.id === pendingSharedHint.athleteId; })[0];
+          var hintRoundIndex = hintRound ? hunt.rounds.indexOf(hintRound) : -1;
+          var hasFreshSet = hintRoundIndex !== -1 && hintRoundIndex < hunt.rounds.length - 1;
+          var nextRound = hasFreshSet ? hunt.rounds[hintRoundIndex + 1] : null;
+          var nextTasks = nextRound && hintAthlete ? selectedTasks(nextRound, taskListFor(nextRound, hintAthlete.id)) : [];
+          var nextTaskPreview = hasFreshSet ? "<div class=\"next-task-preview\"><small>★ NEW SHUFFLED SKILLS FOR " + esc((hintAthlete ? hintAthlete.name : "THE ATHLETE").toUpperCase()) + "</small>" + (nextTasks.length ? "<ol>" + nextTasks.map(function (task) { return "<li>" + esc(task.text) + "</li>"; }).join("") + "</ol>" : "<p>No tasks are ready yet.</p>") + "</div>" : "";
+          if (hintRound) {
+            html = "<div class=\"modal-form\"><p><strong>★ " + esc(hintAthlete ? hintAthlete.name : "An athlete") + " finished all 3 tasks!</strong></p><div class=\"modal-bottom\"><p><strong>SHARED CLASS HINT</strong><br>" + esc(hintRound.clue || "No hint was preloaded for this round.") + "</p></div>" + nextTaskPreview + "<p>" + (hasFreshSet ? "These are " + esc(hintAthlete ? hintAthlete.name + "'s" : "the next") + " new skills for Round " + (hintRoundIndex + 2) + "." : "All shared hints are open. It is time to find the object!") + "</p><div class=\"modal-actions\"><button type=\"button\" class=\"button yellow\" data-action=\"start-next-task-set\">" + (hasFreshSet ? "★ SHOW NEW SHUFFLED SKILLS" : "★ FIND THE OBJECT") + "</button></div></div>";
+          } else {
+            html = "<div class=\"modal-form\"><p>This shared hint is no longer available.</p><div class=\"modal-actions\"><button type=\"button\" class=\"button\" data-action=\"close-modal\">CLOSE</button></div></div>";
+          }
+        } else if (type === "settings") {
+          html = "<div class=\"modal-form\"><label><span>CAMP NAME</span><input id=\"camp-name-input\" value=\"" + esc(state.campName) + "\"></label><section class=\"settings-row\"><div><strong>Back up your camp</strong><p>Download every class, hunt, shared task bank, name checkmarks, clue, and winner in one file.</p></div><button class=\"button blue\" data-action=\"export\">↓ EXPORT</button></section><section class=\"settings-row\"><div><strong>Restore a backup</strong><p>A bad file will not overwrite your camp.</p></div><button class=\"button\" data-action=\"import\">↑ IMPORT</button></section><section class=\"settings-row warning\"><div><strong>Reset camp points</strong><p>Hunts, clues, and finder history remain. Only awarded stars become zero.</p></div><button class=\"button danger\" data-action=\"reset-step-one\">RESET POINTS</button></section><div class=\"modal-actions\"><button class=\"button\" data-action=\"close-modal\">CLOSE</button></div></div>";
+        } else if (type === "reset-one") {
+          html = "<div class=\"modal-form\"><p class=\"warning-copy\">This clears every awarded star total across your camp. It does <strong>not</strong> delete hunt sheets, clues, lesson templates, or who found each object.</p><p>Back up the camp first if you may want these scores later.</p><div class=\"modal-actions\"><button class=\"button\" data-action=\"close-modal\">CANCEL</button><button class=\"button danger\" data-action=\"reset-step-two\">I UNDERSTAND</button></div></div>";
+        } else if (type === "reset-two") {
+          html = "<form class=\"modal-form\" data-form=\"reset\"><p>Second confirmation: type <strong>RESET POINTS</strong> exactly.</p><input id=\"reset-phrase\" autofocus placeholder=\"RESET POINTS\"><div class=\"modal-actions\"><button type=\"button\" class=\"button\" data-action=\"close-modal\">CANCEL</button><button class=\"button danger\" type=\"submit\">RESET NOW</button></div></form>";
+        }
+        byId("modal-layer").innerHTML = modalShell(type.replace(/-/g, " "), html);
+        byId("modal-layer").classList.add("open");
+        byId("modal-layer").setAttribute("aria-hidden", "false");
+      }
+
+      function closeModal() {
+        modal = null;
+        pendingFinish = null;
+        pendingSharedHint = null;
+        byId("modal-layer").classList.remove("open");
+        byId("modal-layer").setAttribute("aria-hidden", "true");
+        byId("modal-layer").innerHTML = "";
+      }
+
+      function saveLesson() {
+        var hunt = currentHunt();
+        state.lessonTemplates.push({ id: id("lesson"), title: hunt.title + " lesson", eventName: currentEvent().name, rounds: hunt.rounds.map(function (round) { return lessonRoundCopy(round, currentClass()); }) });
+        save();
+        toast("Saved to the lesson library.");
+      }
+
+      function loadLesson(lessonId) {
+        var lesson = state.lessonTemplates.filter(function (item) { return item.id === lessonId; })[0];
+        if (!lesson) return;
+        var hunt = currentHunt();
+        hunt.rounds = lesson.rounds.map(function (round) { return freshRoundCopy(round, currentClass().athletes, false); });
+        hunt.revealedRoundIds = [];
+        hunt.completions = {};
+        hunt.assignments = {};
+        hunt.winner = null;
+        hunt.status = "draft";
+        active.round = 0;
+        resetTimer();
+        save();
+        closeModal();
+        render();
+        toast(lesson.title + " loaded with fresh task draws.");
+      }
+
+      function downloadBackup() {
+        var file = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+        var url = URL.createObjectURL(file);
+        var link = document.createElement("a");
+        link.href = url;
+        link.download = "gymnastics-scavenger-hunt-" + new Date().toISOString().slice(0, 10) + ".json";
+        link.click();
+        URL.revokeObjectURL(url);
+        toast("Camp backup downloaded.");
+      }
+
+      function importBackup(file) {
+        var reader = new FileReader();
+        reader.onload = function () {
+          try {
+            var incoming = JSON.parse(String(reader.result));
+            if (!valid(incoming)) throw new Error("Invalid");
+            if (!window.confirm("Replace the current Gymnastics Scavenger Hunt camp with this backup?")) return;
+            state = normalizeState(incoming);
+            active.classId = state.classes[0].id;
+            active.eventId = state.classes[0].events[0].id;
+            active.huntId = state.classes[0].events[0].hunts[0].id;
+            active.round = 0;
+            active.athleteId = state.classes[0].athletes[0].id;
+            resetTimer();
+            save();
+            closeModal();
+            render();
+            toast("Backup restored.");
+          } catch (error) {
+            toast("That file is not a valid Scavenger Hunt backup.");
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      document.addEventListener("click", function (event) {
+        var target = event.target.closest("[data-action]");
+        if (!target) return;
+        var action = target.getAttribute("data-action");
+        var classRoom = currentClass();
+        var hunt = currentHunt();
+        var round = currentRound();
+        var athlete = currentAthlete();
+        var taskList = taskListFor(round, athlete.id);
+
+        if (!isAdmin() && isAdminAction(action)) {
+          toast("Enter the Admin PIN to change hunt setup.");
+          return;
+        }
+        if (action === "new-class") openModal("new-class");
+        if (action === "new-hunt") openModal("new-hunt");
+        if (action === "lessons") openModal("lessons");
+        if (action === "settings") openModal("settings");
+        if (action === "finder") openModal("finder");
+        if (action === "close-modal") closeModal();
+        if (action === "athlete") {
+          var chosenAthlete = classRoom.athletes.filter(function (item) { return item.id === target.getAttribute("data-athlete"); })[0];
+          if (chosenAthlete) {
+            active.athleteId = chosenAthlete.id;
+            if (!isAdmin()) active.round = firstLockedRound(hunt, chosenAthlete.id);
+            resetTimer();
+            render();
+          }
+        }
+        if (action === "start-play") {
+          var incompletePlan = null;
+          hunt.rounds.some(function (item, roundIndex) {
+            return classRoom.athletes.some(function (student) {
+              if (uniqueEligibleTasks(item, taskListFor(item, student.id)).length >= 3) return false;
+              incompletePlan = { roundIndex: roundIndex, athlete: student };
+              return true;
+            });
+          });
+          if (incompletePlan) {
+            active.round = incompletePlan.roundIndex;
+            active.athleteId = incompletePlan.athlete.id;
+            resetTimer();
+            render();
+            toast(incompletePlan.athlete.name + " needs at least three different tasks in Round " + (incompletePlan.roundIndex + 1) + " before Play Mode.");
+            return;
+          }
+          prepareTeamRound(hunt, hunt.rounds[0], classRoom, false);
+          active.round = 0;
+          resetTimer();
+          state.mode = "play";
+          save();
+          render();
+          toast("Play Mode started. Every athlete's task card is visible together.");
+        }
+        if (action === "exit-play") openModal("admin-pin");
+        if (action === "event") {
+          var eventId = target.getAttribute("data-event");
+          var nextEvent = classRoom.events.filter(function (item) { return item.id === eventId; })[0];
+          if (nextEvent) {
+            active.eventId = nextEvent.id;
+            activateHunt(nextEvent.hunts[0]);
+            render();
+          }
+        }
+        if (action === "hunt") {
+          var huntId = target.getAttribute("data-hunt");
+          var nextHunt = currentEvent().hunts.filter(function (item) { return item.id === huntId; })[0];
+          if (nextHunt) {
+            activateHunt(nextHunt);
+            render();
+          }
+        }
+        if (action === "round") {
+          active.round = Number(target.getAttribute("data-round"));
+          resetTimer();
+          render();
+        }
+        if (action === "timer") {
+          timer.running = !timer.running;
+          if (hunt.status === "draft") hunt.status = "active";
+          save();
+          render();
+        }
+        if (action === "timer-reset") {
+          resetTimer();
+          render();
+        }
+        if (action === "confirm-finish") {
+          var pending = pendingFinish;
+          var finishRound = pending && hunt.rounds.filter(function (item) { return item.id === pending.roundId; })[0];
+          var finishAthlete = pending && classRoom.athletes.filter(function (student) { return student.id === pending.athleteId; })[0];
+          var finishPlan = finishRound && finishAthlete ? taskListFor(finishRound, finishAthlete.id) : null;
+          var validFinish = pending && pending.classId === classRoom.id && pending.huntId === hunt.id && finishPlan &&
+            finishPlan.selectedTaskIds.indexOf(pending.taskId) !== -1 &&
+            finishPlan.completedTaskIds.indexOf(pending.taskId) === -1 && completedTaskCount(finishPlan) === 2;
+          if (!validFinish) {
+            closeModal();
+            toast("That task set changed. Please check it again.");
+            return;
+          }
+          finishPlan.completedTaskIds.push(pending.taskId);
+          if (hunt.status === "draft") hunt.status = "active";
+          var sharedHintJustUnlocked = openTeamHintIfComplete(hunt, finishRound, classRoom);
+          if (sharedHintJustUnlocked) {
+            pendingSharedHint = { classId: classRoom.id, huntId: hunt.id, roundId: finishRound.id, athleteId: finishAthlete.id };
+            pendingFinish = null;
+            active.athleteId = finishAthlete.id;
+            save();
+            render();
+            openModal("shared-hint");
+          } else {
+            closeModal();
+            save();
+            render();
+            toast(finishAthlete.name + " finished their three tasks. The shared hint is already open for everyone.");
+          }
+          return;
+        }
+        if (action === "complete-task") {
+          var taskAthlete = athleteForId(target.getAttribute("data-athlete"));
+          var taskPlan = taskListFor(round, taskAthlete.id);
+          var taskId = target.getAttribute("data-task-id");
+          if (taskPlan.selectedTaskIds.indexOf(taskId) === -1) return;
+          var completedIndex = taskPlan.completedTaskIds.indexOf(taskId);
+          if (!isAdmin() && completedIndex === -1 && completedTaskCount(taskPlan) === 2) {
+            pendingFinish = { classId: classRoom.id, huntId: hunt.id, roundId: round.id, athleteId: taskAthlete.id, taskId: taskId };
+            openModal("confirm-finish");
+            return;
+          }
+          if (completedIndex === -1) taskPlan.completedTaskIds.push(taskId);
+          else taskPlan.completedTaskIds.splice(completedIndex, 1);
+          var teamHintJustUnlocked = openTeamHintIfComplete(hunt, round, classRoom);
+          if (hunt.status === "draft") hunt.status = "active";
+          save();
+          render();
+          if (teamHintJustUnlocked) {
+            toast("Shared hint unlocked for everyone! The next round's fresh task sets are ready.");
+          } else if (allTasksComplete(taskPlan)) {
+            toast(taskAthlete.name + " finished their three tasks. The shared hint is already open for everyone.");
+          }
+        }
+        if (action === "reshuffle") {
+          var reshuffleAthlete = athleteForId(target.getAttribute("data-athlete"));
+          var reshufflePlan = taskListFor(round, reshuffleAthlete.id);
+          if (reshufflePlan.reshuffles >= 3) {
+            toast("All three reshuffles have been used.");
+            return;
+          }
+          if (reshufflePlan.completedTaskIds.length) {
+            toast("Finish this set or ask an admin to clear it before reshuffling.");
+            return;
+          }
+          if (!randomizeTasks(round, reshufflePlan, false)) {
+            toast(reshuffleAthlete.name + " needs at least three checked tasks.");
+            return;
+          }
+          reshufflePlan.reshuffles += 1;
+          save();
+          render();
+          toast("New set picked for " + reshuffleAthlete.name + ". " + (3 - reshufflePlan.reshuffles) + " reshuffle" + (3 - reshufflePlan.reshuffles === 1 ? "" : "s") + " left.");
+        }
+        if (action === "start-next-task-set") {
+          var sharedHint = pendingSharedHint;
+          var sharedHintAthlete = sharedHint && classRoom.athletes.filter(function (student) { return student.id === sharedHint.athleteId; })[0];
+          var sharedHintRound = sharedHint && hunt.rounds.filter(function (item) { return item.id === sharedHint.roundId; })[0];
+          var hasFreshSet = sharedHintRound && hunt.rounds.indexOf(sharedHintRound) < hunt.rounds.length - 1;
+          if (hasFreshSet) {
+            if (sharedHintAthlete) active.athleteId = sharedHintAthlete.id;
+            moveToNextTaskSet(hunt, sharedHintRound, classRoom);
+            save();
+          }
+          closeModal();
+          render();
+          toast(hasFreshSet ? (sharedHintAthlete ? sharedHintAthlete.name + "'s" : "The class's") + " fresh task set is ready." : "All shared hints are open. Time to find the object!");
+          return;
+        }
+        if (action === "next-round") {
+          if (!allAthletesHintOpen(hunt, round, classRoom)) return;
+          if (active.round >= hunt.rounds.length - 1) {
+            toast("Everyone has all hints. Time to find the object!");
+            return;
+          }
+          moveToNextTaskSet(hunt, round, classRoom);
+          save();
+          render();
+          toast("Next round is ready for every athlete.");
+        }
+        if (action === "admin-randomize") {
+          if (!randomizeTasks(round, taskList, true)) {
+            toast("Check at least three tasks for this student before randomizing.");
+            return;
+          }
+          save();
+          render();
+          toast("Admin picked a fresh set of three tasks for " + athlete.name + ".");
+        }
+        if (action === "clear-task-progress") {
+          taskList.completedTaskIds = [];
+          taskList.hintRevealed = false;
+          save();
+          render();
+          toast(athlete.name + "'s task checks and hint lock were reset.");
+        }
+        if (action === "add-task") {
+          var addedTask = { id: id("task"), text: "New task " + (round.taskPool.length + 1) + " — edit me" };
+          round.taskPool.push(addedTask);
+          round.tasks = round.taskPool.map(function (task) { return task.text; });
+          classRoom.athletes.forEach(function (student) {
+            var plan = taskListFor(round, student.id);
+            if (plan.eligibleTaskIds.indexOf(addedTask.id) === -1) plan.eligibleTaskIds.push(addedTask.id);
+          });
+          save();
+          render();
+        }
+        if (action === "delete-task") {
+          var removeId = target.getAttribute("data-task-id");
+          round.taskPool = round.taskPool.filter(function (task) { return task.id !== removeId; });
+          round.tasks = round.taskPool.map(function (task) { return task.text; });
+          classRoom.athletes.forEach(function (student) {
+            var plan = taskListFor(round, student.id);
+            var removedFromSet = plan.selectedTaskIds.indexOf(removeId) !== -1;
+            plan.eligibleTaskIds = plan.eligibleTaskIds.filter(function (taskId) { return taskId !== removeId; });
+            plan.selectedTaskIds = plan.selectedTaskIds.filter(function (taskId) { return taskId !== removeId; });
+            plan.completedTaskIds = plan.completedTaskIds.filter(function (taskId) { return taskId !== removeId; });
+            if (removedFromSet) plan.hintRevealed = false;
+              if (uniqueEligibleTasks(round, plan).length >= 3 && plan.selectedTaskIds.length !== 3) randomizeTasks(round, plan, false);
+          });
+          save();
+          render();
+        }
+        if (action === "reveal-clue") {
+          var clueWasHidden = hunt.revealedRoundIds.indexOf(round.id) === -1;
+          if (clueWasHidden) {
+            hunt.revealedRoundIds.push(round.id);
+            prepareNextTeamRound(hunt, round, classRoom);
+          }
+          if (hunt.status === "draft") hunt.status = "active";
+          save();
+          render();
+          toast("Round " + (active.round + 1) + " shared hint revealed" + (clueWasHidden && active.round < hunt.rounds.length - 1 ? ". The next task sets are ready." : "."));
+        }
+        if (action === "toggle-secret") {
+          secretVisible = !secretVisible;
+          render();
+        }
+        if (action === "complete") {
+          var athleteId = target.getAttribute("data-athlete");
+          hunt.completions[round.id] = hunt.completions[round.id] || [];
+          var index = hunt.completions[round.id].indexOf(athleteId);
+          if (index === -1) hunt.completions[round.id].push(athleteId);
+          else hunt.completions[round.id].splice(index, 1);
+          if (hunt.status === "draft") hunt.status = "active";
+          save();
+          render();
+        }
+        if (action === "archive") {
+          if (!window.confirm("End this hunt with no finder? Its tasks and clues will stay in the history.")) return;
+          hunt.status = "archived";
+          save();
+          render();
+          toast("Hunt archived with no finder.");
+        }
+        if (action === "save-lesson") {
+          saveLesson();
+          if (modal === "lessons") openModal("lessons");
+        }
+        if (action === "load-lesson") {
+          var hasProgress = hunt.winner || hunt.rounds.some(function (item) {
+            return Object.keys(item.studentTasks || {}).some(function (athleteId) {
+              return item.studentTasks[athleteId].completedTaskIds && item.studentTasks[athleteId].completedTaskIds.length;
+            });
+          });
+          if (hasProgress && !window.confirm("Loading a lesson clears this hunt's check-offs and finder. Continue?")) return;
+          loadLesson(target.getAttribute("data-lesson"));
+        }
+        if (action === "export") downloadBackup();
+        if (action === "import") byId("backup-file").click();
+        if (action === "reset-step-one") openModal("reset-one");
+        if (action === "reset-step-two") openModal("reset-two");
+      });
+
+      document.addEventListener("input", function (event) {
+        var target = event.target;
+        if (!isAdmin()) return;
+        var hunt = currentHunt();
+        var round = currentRound();
+        var taskList = currentTaskList();
+        if (target.id === "hunt-title") hunt.title = target.value;
+        if (target.id === "object-name") hunt.objectName = target.value;
+        if (target.id === "coach-note") hunt.coachLocation = target.value;
+        if (target.id === "clue-text") round.clue = target.value;
+        if (target.hasAttribute("data-task-text")) {
+          var task = round.taskPool.filter(function (item) { return item.id === target.getAttribute("data-task-text"); })[0];
+          if (task) {
+            task.text = target.value;
+            round.tasks = round.taskPool.map(function (item) { return item.text; });
+          }
+        }
+        if (target.id === "camp-name-input") state.campName = target.value;
+        save();
+      });
+
+      document.addEventListener("change", function (event) {
+        var target = event.target;
+        if (!isAdmin()) return;
+        if (target.id === "class-select") {
+          var classRoom = state.classes.filter(function (item) { return item.id === target.value; })[0];
+          if (classRoom) {
+            active.classId = classRoom.id;
+            active.eventId = classRoom.events[0].id;
+            active.athleteId = classRoom.athletes[0].id;
+            activateHunt(classRoom.events[0].hunts[0]);
+            render();
+          }
+        }
+        if (target.id === "round-duration") {
+          currentHunt().roundDuration = Math.max(1, Number(target.value) || 10);
+          resetTimer();
+          save();
+          render();
+        }
+        if (target.id === "point-value") {
+          currentHunt().pointValue = Math.max(0, Number(target.value) || 0);
+          save();
+        }
+        if (target.hasAttribute("data-task-eligible")) {
+          var eligibilityRound = currentRound();
+          var eligibilityAthlete = athleteForId(target.getAttribute("data-athlete"));
+          var eligibilityPlan = taskListFor(eligibilityRound, eligibilityAthlete.id);
+          var eligibilityId = target.getAttribute("data-task-eligible");
+          if (target.checked) {
+            if (eligibilityPlan.eligibleTaskIds.indexOf(eligibilityId) === -1) eligibilityPlan.eligibleTaskIds.push(eligibilityId);
+          } else {
+            var removedFromSet = eligibilityPlan.selectedTaskIds.indexOf(eligibilityId) !== -1;
+            eligibilityPlan.eligibleTaskIds = eligibilityPlan.eligibleTaskIds.filter(function (taskId) { return taskId !== eligibilityId; });
+            eligibilityPlan.selectedTaskIds = eligibilityPlan.selectedTaskIds.filter(function (taskId) { return taskId !== eligibilityId; });
+            eligibilityPlan.completedTaskIds = eligibilityPlan.completedTaskIds.filter(function (taskId) { return taskId !== eligibilityId; });
+            if (removedFromSet) {
+              eligibilityPlan.hintRevealed = false;
+              if (uniqueEligibleTasks(eligibilityRound, eligibilityPlan).length >= 3) randomizeTasks(eligibilityRound, eligibilityPlan, false);
+            }
+          }
+          save();
+          render();
+        }
+        if (target.hasAttribute("data-task-select")) {
+          var round = currentRound();
+          var taskList = currentTaskList();
+          var selectedId = target.getAttribute("data-task-select");
+          var selectedTask = round.taskPool.filter(function (task) { return task.id === selectedId; })[0];
+          if (taskList.eligibleTaskIds.indexOf(selectedId) === -1) {
+            toast("Check this task for " + currentAthlete().name + " before adding it to their play set.");
+            render();
+            return;
+          }
+          if (target.checked) {
+            var duplicateSelectedText = selectedTask && selectedTasks(round, taskList).some(function (task) {
+              return taskTextKey(task.text) === taskTextKey(selectedTask.text);
+            });
+            if (duplicateSelectedText) {
+              target.checked = false;
+              toast("A three-task set cannot repeat the same task.");
+              return;
+            }
+            if (taskList.selectedTaskIds.length >= 3) {
+              target.checked = false;
+              toast("Choose exactly three tasks for Play Mode.");
+              return;
+            }
+            taskList.selectedTaskIds.push(selectedId);
+          } else {
+            taskList.selectedTaskIds = taskList.selectedTaskIds.filter(function (taskId) { return taskId !== selectedId; });
+            taskList.completedTaskIds = taskList.completedTaskIds.filter(function (taskId) { return taskId !== selectedId; });
+          }
+          taskList.completedTaskIds = [];
+          taskList.hintRevealed = false;
+          taskList.adminOverride = true;
+          round.taskSetsGenerated = taskList.selectedTaskIds.length === 3;
+          save();
+          render();
+        }
+        if (target.hasAttribute("data-task-done")) {
+          var doneRound = currentRound();
+          var doneTaskList = currentTaskList();
+          var doneTaskId = target.getAttribute("data-task-done");
+          if (doneTaskList.selectedTaskIds.indexOf(doneTaskId) === -1) return;
+          if (target.checked && doneTaskList.completedTaskIds.indexOf(doneTaskId) === -1) doneTaskList.completedTaskIds.push(doneTaskId);
+          if (!target.checked) doneTaskList.completedTaskIds = doneTaskList.completedTaskIds.filter(function (taskId) { return taskId !== doneTaskId; });
+          var teamHintWasUnlocked = openTeamHintIfComplete(currentHunt(), doneRound, currentClass());
+          save();
+          render();
+          if (teamHintWasUnlocked) toast("Shared hint unlocked for everyone! The next round's fresh task sets are ready.");
+        }
+        if (target.hasAttribute("data-assignment")) {
+          var round = currentRound();
+          var hunt = currentHunt();
+          hunt.assignments[round.id] = hunt.assignments[round.id] || {};
+          hunt.assignments[round.id][target.getAttribute("data-assignment")] = Number(target.value);
+          save();
+        }
+      });
+
+      byId("backup-file").addEventListener("change", function (event) {
+        var file = event.target.files && event.target.files[0];
+        if (file) importBackup(file);
+        event.target.value = "";
+      });
+
+      byId("modal-layer").addEventListener("submit", function (event) {
+        event.preventDefault();
+        var form = event.target;
+        if (form.getAttribute("data-form") === "new-class") {
+          var name = byId("new-class-name").value.trim();
+          var athletes = byId("new-roster").value.split(/\n|,/).map(function (item) { return item.trim(); }).filter(Boolean);
+          var eventNames = Array.prototype.slice.call(document.querySelectorAll("input[name=new-event]:checked")).map(function (input) { return input.value; });
+          if (!name || !athletes.length || !eventNames.length) {
+            toast("Add a class name, at least one athlete, and an event.");
+            return;
+          }
+          var classRoom = makeClass(name, athletes, eventNames);
+          state.classes.push(classRoom);
+          active.classId = classRoom.id;
+          active.eventId = classRoom.events[0].id;
+          active.athleteId = classRoom.athletes[0].id;
+          activateHunt(classRoom.events[0].hunts[0]);
+          save();
+          closeModal();
+          render();
+          toast(name + " is ready for a star hunt.");
+        }
+        if (form.getAttribute("data-form") === "new-hunt") {
+          var title = byId("new-hunt-title").value.trim();
+          if (!title) return;
+          var source = currentHunt();
+          var newHunt;
+          if (byId("copy-setup").checked) {
+            newHunt = copy(source);
+            newHunt.id = id("hunt");
+            newHunt.title = title;
+            newHunt.status = "draft";
+            newHunt.rounds = source.rounds.map(function (round) { return freshRoundCopy(round, currentClass().athletes, true); });
+            newHunt.revealedRoundIds = [];
+            newHunt.completions = {};
+            newHunt.assignments = {};
+            newHunt.winner = null;
+            newHunt.objectName = "mini yellow star";
+            newHunt.coachLocation = "";
+          } else {
+            newHunt = makeHunt(currentEvent().name, title, currentClass().athletes);
+          }
+          currentEvent().hunts.push(newHunt);
+          activateHunt(newHunt);
+          save();
+          closeModal();
+          render();
+          toast(title + " is a fresh hunt sheet.");
+        }
+        if (form.getAttribute("data-form") === "finder") {
+          var finderId = byId("finder-select").value;
+          var hunt = currentHunt();
+          hunt.winner = { athleteId: finderId, points: hunt.pointValue, foundAt: new Date().toISOString() };
+          hunt.status = "found";
+          var name = currentClass().athletes.filter(function (item) { return item.id === finderId; })[0].name;
+          save();
+          closeModal();
+          render();
+          toast(name + " earned " + hunt.pointValue + " star.");
+        }
+        if (form.getAttribute("data-form") === "admin-pin") {
+          if (byId("admin-pin").value !== "4159") {
+            byId("admin-pin").value = "";
+            toast("That PIN did not unlock Admin Mode.");
+            return;
+          }
+          state.mode = "admin";
+          save();
+          closeModal();
+          render();
+          toast("Admin Mode unlocked.");
+        }
+        if (form.getAttribute("data-form") === "reset") {
+          if (byId("reset-phrase").value !== "RESET POINTS") {
+            toast("Type RESET POINTS exactly to continue.");
+            return;
+          }
+          state.classes.forEach(function (classRoom) {
+            classRoom.events.forEach(function (event) {
+              event.hunts.forEach(function (hunt) {
+                if (hunt.winner) hunt.winner.points = 0;
+              });
+            });
+          });
+          save();
+          closeModal();
+          render();
+          toast("Camp points reset. Hunt history is still intact.");
+        }
+      });
+
+      setInterval(function () {
+        if (!timer.running) return;
+        if (timer.seconds <= 1) {
+          timer.seconds = 0;
+          timer.running = false;
+          render();
+          toast("Time! The clue is still coach-controlled.");
+          return;
+        }
+        timer.seconds -= 1;
+        byId("timer-readout").textContent = Math.floor(timer.seconds / 60) + ":" + String(timer.seconds % 60).padStart(2, "0");
+        byId("timer-readout").classList.toggle("urgent", timer.seconds <= 60);
+      }, 1000);
+
+      save();
+      render();
+    }());
+  </script>
+</body>
+</html>
