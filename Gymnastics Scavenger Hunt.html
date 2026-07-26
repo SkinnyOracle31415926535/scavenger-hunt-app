@@ -323,6 +323,34 @@
     .lesson-card small { color: var(--blue); font: 900 9px "Courier New", monospace; }
     .lesson-card h3 { margin: 3px 0; font: 900 14px "Courier New", monospace; }
     .lesson-card p { margin: 0; color: #555; font-size: 11px; }
+    .planning-modal { width: min(1040px, 100%); }
+    .planning-workspace { display: grid; gap: 12px; }
+    .planning-intro { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px; border: 2px solid; border-color: #555 #fff #fff #555; background: #aaa; }
+    .planning-intro p { margin: 0; color: #fff; font: 900 10px/1.4 "Courier New", monospace; }
+    .planning-intro b { color: var(--yellow); }
+    .planning-setup { display: grid; grid-template-columns: minmax(180px, .7fr) minmax(260px, 1.3fr); gap: 10px; padding: 10px; border: 2px solid; border-color: #fff #777 #777 #fff; background: #ddd; }
+    .planning-setup label, .planning-round label { display: grid; gap: 4px; }
+    .planning-setup label > span, .planning-round label > span { color: #333; font: 900 9px "Courier New", monospace; letter-spacing: .06em; }
+    .planning-setup textarea { min-height: 74px; }
+    .planning-round { padding: 10px; border: 2px solid; border-color: #fff #666 #666 #fff; background: #d4d4d4; }
+    .planning-round-head { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: end; gap: 8px; margin-bottom: 9px; }
+    .planning-round-number { display: grid; width: 34px; height: 34px; place-items: center; color: #fff; background: var(--blue); font: 900 15px "Courier New", monospace; }
+    .planning-round-grid { display: grid; grid-template-columns: minmax(220px, .9fr) minmax(0, 1.4fr); gap: 10px; }
+    .planning-skills { display: grid; align-content: start; gap: 5px; padding: 8px; border: 2px solid; border-color: #555 #fff #fff #555; background: #eee; }
+    .planning-skill { display: grid; grid-template-columns: 22px minmax(0, 1fr); align-items: center; gap: 5px; }
+    .planning-skill b { color: var(--blue); font: 900 10px "Courier New", monospace; text-align: center; }
+    .planning-skill input { min-height: 27px; font-size: 12px; }
+    .planning-assignments { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); align-content: start; gap: 7px; }
+    .planning-athlete { min-width: 0; padding: 7px; border: 2px solid; border-color: #fff #777 #777 #fff; background: #eee; }
+    .planning-athlete strong { display: block; overflow: hidden; margin-bottom: 5px; color: var(--blue); font: 900 11px "Courier New", monospace; text-overflow: ellipsis; white-space: nowrap; }
+    .planning-athlete select { min-height: 27px; margin-top: 4px; font-size: 11px; }
+    .planning-athlete small { display: block; margin-top: 5px; color: #555; font-size: 9px; }
+    .planning-prompt { padding: 10px; border: 2px solid; border-color: #8c7300 #fff8ab #fff8ab #8c7300; background: #fff2a8; }
+    .planning-prompt h3 { margin: 0 0 4px; color: #5e4b00; font: 900 14px "Courier New", monospace; }
+    .planning-prompt p { margin: 0 0 8px; font-size: 11px; }
+    .planning-prompt textarea { min-height: 190px; font: 11px/1.4 "Courier New", monospace; }
+    .planning-prompt-actions { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .planning-prompt-actions small { align-self: center; color: #5e4b00; font: 900 9px "Courier New", monospace; }
     .modal-bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid #888; }
     .settings-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 14px; padding: 12px 0; border-top: 1px solid #8d8d8d; }
     .settings-row p { margin: 3px 0 0; color: #5b5b5b; font-size: 11px; }
@@ -359,6 +387,7 @@
       .task-table-wrap { max-height: 56vh; }
       .task-table th:nth-child(2), .task-table td:nth-child(2) { width: 190px; min-width: 190px; }
       .task-table .eligibility-head, .task-table .eligibility-cell, .task-table .override-cell { width: 48px; min-width: 48px; }
+      .planning-round-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 480px) {
       .desktop { padding: 7px; }
@@ -376,6 +405,12 @@
       .task-controls { align-items: stretch; flex-direction: column; }
       .task-controls > div { justify-content: stretch; }
       .task-controls .mini-button { flex: 1; }
+      .planning-intro { align-items: stretch; flex-direction: column; }
+      .planning-setup { grid-template-columns: 1fr; }
+      .planning-round-head { grid-template-columns: 34px minmax(0, 1fr); }
+      .planning-round-head .button { grid-column: 1 / -1; }
+      .planning-assignments { grid-template-columns: 1fr; }
+      .planning-prompt-actions { align-items: stretch; flex-direction: column; }
     }
     @media (prefers-reduced-motion: reduce) {
       .start-play-button, .start-play-button::after { animation: none; }
@@ -400,6 +435,7 @@
     <section class="window toolbar" aria-label="Camp controls">
       <label class="admin-only"><span>ACTIVE CLASS</span><select id="class-select"></select></label>
       <button class="button blue admin-only" data-action="new-class">＋ NEW CLASS</button>
+      <button class="button yellow admin-only" data-action="planner">★ PLAN HUNT</button>
       <button class="button admin-only" data-action="lessons">▤ LESSON LIBRARY</button>
       <button class="button blue admin-only start-play-button" data-action="start-play" id="start-play-button">▶ START PLAY MODE</button>
       <button class="button yellow play-only" data-action="exit-play" id="exit-play-button">🔒 EXIT PLAY MODE</button>
@@ -497,6 +533,7 @@
       var modal = null;
       var pendingFinish = null;
       var pendingSharedHint = null;
+      var plannerPrompt = "";
       var secretVisible = false;
       var toastTimer = null;
       var timer = { running: false, seconds: 600 };
@@ -960,7 +997,8 @@
           "new-class", "new-hunt", "lessons", "settings", "finder", "event", "hunt",
           "reveal-clue", "toggle-secret", "archive", "save-lesson", "load-lesson", "export",
           "import", "reset-step-one", "reset-step-two", "admin-randomize", "clear-task-progress",
-          "add-task", "delete-task", "start-play"
+          "add-task", "delete-task", "start-play", "planner", "planner-generate",
+          "planner-add-task", "build-hint-prompt", "copy-hint-prompt"
         ].indexOf(action) !== -1;
       }
       function selectedTasks(round, taskList) {
@@ -1222,7 +1260,81 @@
       }
 
       function modalShell(title, body) {
-        return "<section class=\"window modal\" role=\"dialog\" aria-modal=\"true\"><div class=\"titlebar\"><span>★ " + esc(title.toUpperCase()) + "</span><button class=\"button\" data-action=\"close-modal\" aria-label=\"Close dialog\">×</button></div><div class=\"modal-body\">" + body + "</div></section>";
+        var wide = title === "lesson planner" ? " planning-modal" : "";
+        return "<section class=\"window modal" + wide + "\" role=\"dialog\" aria-modal=\"true\"><div class=\"titlebar\"><span>★ " + esc(title.toUpperCase()) + "</span><button class=\"button\" data-action=\"close-modal\" aria-label=\"Close dialog\">×</button></div><div class=\"modal-body\">" + body + "</div></section>";
+      }
+
+      function plannerRoundForId(roundId) {
+        return currentHunt().rounds.filter(function (round) { return round.id === roundId; })[0];
+      }
+
+      function plannerAssignmentSelect(round, athlete, slot) {
+        var plan = taskListFor(round, athlete.id);
+        var selectedId = plan.selectedTaskIds[slot] || "";
+        var choices = uniqueEligibleTasks(round, plan);
+        return "<select data-planner-assignment data-round-id=\"" + esc(round.id) + "\" data-athlete=\"" + esc(athlete.id) + "\" data-slot=\"" + slot + "\" aria-label=\"" + esc(athlete.name) + " assignment " + (slot + 1) + "\">" +
+          option("", "Assignment " + (slot + 1) + " — choose skill", !selectedId) +
+          choices.map(function (task) { return option(task.id, task.text, task.id === selectedId); }).join("") +
+          "</select>";
+      }
+
+      function planningRoundHtml(round, roundIndex, classRoom) {
+        var assignedCount = classRoom.athletes.filter(function (athlete) {
+          return taskListFor(round, athlete.id).selectedTaskIds.length === 3;
+        }).length;
+        var skills = round.taskPool.map(function (task, taskIndex) {
+          return "<div class=\"planning-skill\"><b>" + (taskIndex + 1) + "</b><input data-planner-task=\"" + esc(task.id) + "\" data-round-id=\"" + esc(round.id) + "\" value=\"" + esc(task.text) + "\" aria-label=\"Round " + (roundIndex + 1) + " shared skill " + (taskIndex + 1) + "\"></div>";
+        }).join("");
+        var assignments = classRoom.athletes.map(function (athlete) {
+          var plan = taskListFor(round, athlete.id);
+          return "<section class=\"planning-athlete\"><strong>★ " + esc(athlete.name) + "</strong>" +
+            plannerAssignmentSelect(round, athlete, 0) +
+            plannerAssignmentSelect(round, athlete, 1) +
+            plannerAssignmentSelect(round, athlete, 2) +
+            "<small>" + plan.selectedTaskIds.length + " / 3 assigned · " + uniqueEligibleTasks(round, plan).length + " eligible</small></section>";
+        }).join("");
+        return "<section class=\"planning-round\"><div class=\"planning-round-head\"><b class=\"planning-round-number\">" + (roundIndex + 1) + "</b>" +
+          "<label><span>ROUND NAME</span><input data-planner-round-title=\"" + esc(round.id) + "\" value=\"" + esc(round.title) + "\" aria-label=\"Round " + (roundIndex + 1) + " name\"></label>" +
+          "<button class=\"button blue\" data-action=\"planner-generate\" data-round-id=\"" + esc(round.id) + "\">↺ GENERATE ALL 3 · " + assignedCount + "/" + classRoom.athletes.length + "</button></div>" +
+          "<div class=\"planning-round-grid\"><div><label><span>HINT FOR THIS ROUND</span><textarea data-planner-hint=\"" + esc(round.id) + "\" aria-label=\"Round " + (roundIndex + 1) + " hint\">" + esc(round.clue) + "</textarea></label>" +
+          "<div class=\"planning-skills\"><span class=\"field-label\">SHARED SKILL BANK</span>" + skills + "<button class=\"mini-button\" data-action=\"planner-add-task\" data-round-id=\"" + esc(round.id) + "\">＋ ADD SHARED SKILL</button></div></div>" +
+          "<div><span class=\"field-label\">ATHLETE ASSIGNMENTS</span><div class=\"planning-assignments\">" + assignments + "</div></div></div></section>";
+      }
+
+      function buildHintPrompt() {
+        var hunt = currentHunt();
+        var eventName = currentEvent().name;
+        var location = hunt.coachLocation.trim() || "[add the coach-only hiding spot]";
+        var rounds = hunt.rounds.map(function (round, index) {
+          return "Round " + (index + 1) + " — " + round.title + "\nExisting hint: " + (round.clue.trim() || "[none yet]") +
+            "\nGymnastics skills: " + round.taskPool.map(function (task) { return task.text; }).join("; ");
+        }).join("\n\n");
+        return "Create 20 short scavenger-hunt hints for a gymnastics class.\n\n" +
+          "Hunt: " + hunt.title + "\nEvent area: " + eventName + "\nHidden object: " + hunt.objectName + "\nCoach-only hiding spot: " + location + "\n\n" +
+          "Make the hints progressively clearer. Keep the first hints broad and save the exact location for the final 3 hints. Use simple language athletes can understand. Keep every hint safe: do not tell athletes to climb equipment, enter landing zones, move mats, or touch the hidden object until the coach says it is safe.\n\n" +
+          "Current lesson plan:\n" + rounds + "\n\nReturn only a numbered list of 20 new hints. Avoid repeating the existing hints word for word.";
+      }
+
+      function copyPlannerPrompt(text) {
+        function fallbackCopy() {
+          var field = document.createElement("textarea");
+          field.value = text;
+          field.setAttribute("readonly", "");
+          field.style.position = "fixed";
+          field.style.opacity = "0";
+          document.body.appendChild(field);
+          field.select();
+          var copied = document.execCommand("copy");
+          field.remove();
+          toast(copied ? "Prompt copied. Paste it into the LLM you choose." : "Select the prompt and copy it manually.");
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () {
+            toast("Prompt copied. Paste it into the LLM you choose.");
+          }).catch(fallbackCopy);
+        } else {
+          fallbackCopy();
+        }
       }
 
       function openModal(type) {
@@ -1233,6 +1345,11 @@
         var html = "";
         if (type === "new-class") {
           html = "<form class=\"modal-form\" data-form=\"new-class\"><p>Make a fresh class board with its own athlete roster and event hunt sheets.</p><label><span>CLASS NAME</span><input id=\"new-class-name\" autofocus placeholder=\"Example: Boys Camp 1\"></label><label><span>ATHLETES</span><textarea id=\"new-roster\" placeholder=\"One athlete per line&#10;Avery&#10;Mason&#10;Kai\"></textarea></label><div><span class=\"field-label\">EVENT PAGES</span><div class=\"checkboxes\">" + EVENTS.map(function (name) { return "<label><input type=\"checkbox\" name=\"new-event\" value=\"" + esc(name) + "\" checked> " + esc(name) + "</label>"; }).join("") + "</div></div><div class=\"modal-actions\"><button type=\"button\" class=\"button\" data-action=\"close-modal\">CANCEL</button><button class=\"button blue\" type=\"submit\">CREATE CLASS</button></div></form>";
+        } else if (type === "planner") {
+          html = "<div class=\"planning-workspace\"><div class=\"planning-intro\"><p><b>★ ONE WORKSPACE.</b> Edit the current hunt, hiding spot, hints, skill banks, and athlete assignments here. Every change saves back to this hunt.</p><button class=\"button\" data-action=\"close-modal\">DONE PLANNING</button></div>" +
+            "<section class=\"planning-setup\"><label><span>HIDDEN OBJECT</span><input id=\"planner-object-name\" value=\"" + esc(hunt.objectName) + "\"></label><label><span>COACH-ONLY HIDING SPOT</span><textarea id=\"planner-coach-note\" placeholder=\"Example: behind the folded red panel mat\">" + esc(hunt.coachLocation) + "</textarea></label></section>" +
+            hunt.rounds.map(function (round, index) { return planningRoundHtml(round, index, classRoom); }).join("") +
+            "<section class=\"planning-prompt\"><h3>★ LLM HINT PROMPT</h3><p>This only builds text from the plan above. Nothing is sent anywhere automatically.</p><textarea id=\"planner-prompt\" readonly placeholder=\"Choose BUILD PROMPT, then copy the text into the LLM you want to use.\">" + esc(plannerPrompt) + "</textarea><div class=\"planning-prompt-actions\"><small>LOCAL · COPY ONLY · NO AUTOMATIC NETWORK CALL</small><div><button class=\"button\" data-action=\"build-hint-prompt\">BUILD PROMPT</button> <button class=\"button blue\" data-action=\"copy-hint-prompt\"" + (plannerPrompt ? "" : " disabled") + ">COPY PROMPT</button></div></div></section></div>";
         } else if (type === "new-hunt") {
           html = "<form class=\"modal-form\" data-form=\"new-hunt\"><p>Create another day or object under <strong>" + esc(event.name) + "</strong>. Its history stays separate.</p><label><span>HUNT NAME</span><input id=\"new-hunt-title\" autofocus value=\"" + esc(event.name + " • Day " + (event.hunts.length + 1)) + "\"></label><label style=\"display:block\"><input id=\"copy-setup\" type=\"checkbox\" checked style=\"width:auto\"> Copy the rounds, shared task bank, name checkmarks, and clues <small>(never copies completions or the finder)</small></label><div class=\"modal-actions\"><button type=\"button\" class=\"button\" data-action=\"close-modal\">CANCEL</button><button class=\"button blue\" type=\"submit\">CREATE SHEET</button></div></form>";
         } else if (type === "lessons") {
@@ -1273,7 +1390,7 @@
         } else if (type === "reset-two") {
           html = "<form class=\"modal-form\" data-form=\"reset\"><p>Second confirmation: type <strong>RESET POINTS</strong> exactly.</p><input id=\"reset-phrase\" autofocus placeholder=\"RESET POINTS\"><div class=\"modal-actions\"><button type=\"button\" class=\"button\" data-action=\"close-modal\">CANCEL</button><button class=\"button danger\" type=\"submit\">RESET NOW</button></div></form>";
         }
-        byId("modal-layer").innerHTML = modalShell(type.replace(/-/g, " "), html);
+        byId("modal-layer").innerHTML = modalShell(type === "planner" ? "lesson planner" : type.replace(/-/g, " "), html);
         byId("modal-layer").classList.add("open");
         byId("modal-layer").setAttribute("aria-hidden", "false");
       }
@@ -1364,10 +1481,51 @@
         }
         if (action === "new-class") openModal("new-class");
         if (action === "new-hunt") openModal("new-hunt");
+        if (action === "planner") {
+          plannerPrompt = "";
+          openModal("planner");
+        }
         if (action === "lessons") openModal("lessons");
         if (action === "settings") openModal("settings");
         if (action === "finder") openModal("finder");
-        if (action === "close-modal") closeModal();
+        if (action === "close-modal") {
+          var closedPlanner = modal === "planner";
+          closeModal();
+          if (closedPlanner) render();
+        }
+        if (action === "planner-generate") {
+          var generatedRound = plannerRoundForId(target.getAttribute("data-round-id"));
+          if (!generatedRound || !prepareTeamRound(hunt, generatedRound, classRoom, true)) {
+            toast("Every athlete needs at least three checked skills before assignments can be generated.");
+            return;
+          }
+          plannerPrompt = "";
+          save();
+          openModal("planner");
+          toast("Fresh three-skill assignments are ready for every athlete in this round.");
+        }
+        if (action === "planner-add-task") {
+          var planningRound = plannerRoundForId(target.getAttribute("data-round-id"));
+          if (!planningRound) return;
+          var planningTask = { id: id("task"), text: "New shared skill " + (planningRound.taskPool.length + 1) + " — edit me" };
+          planningRound.taskPool.push(planningTask);
+          planningRound.tasks = planningRound.taskPool.map(function (task) { return task.text; });
+          classRoom.athletes.forEach(function (student) {
+            var plan = taskListFor(planningRound, student.id);
+            if (plan.eligibleTaskIds.indexOf(planningTask.id) === -1) plan.eligibleTaskIds.push(planningTask.id);
+          });
+          plannerPrompt = "";
+          save();
+          openModal("planner");
+        }
+        if (action === "build-hint-prompt") {
+          plannerPrompt = buildHintPrompt();
+          byId("planner-prompt").value = plannerPrompt;
+          var copyButton = byId("modal-layer").querySelector("[data-action=copy-hint-prompt]");
+          if (copyButton) copyButton.disabled = false;
+          toast("Prompt built locally. Review it, then copy it when ready.");
+        }
+        if (action === "copy-hint-prompt" && plannerPrompt) copyPlannerPrompt(plannerPrompt);
         if (action === "athlete") {
           var chosenAthlete = classRoom.athletes.filter(function (item) { return item.id === target.getAttribute("data-athlete"); })[0];
           if (chosenAthlete) {
@@ -1635,10 +1793,31 @@
         var hunt = currentHunt();
         var round = currentRound();
         var taskList = currentTaskList();
+        var plannerInput = target.id === "planner-object-name" || target.id === "planner-coach-note" ||
+          target.hasAttribute("data-planner-round-title") || target.hasAttribute("data-planner-hint") ||
+          target.hasAttribute("data-planner-task");
         if (target.id === "hunt-title") hunt.title = target.value;
         if (target.id === "object-name") hunt.objectName = target.value;
         if (target.id === "coach-note") hunt.coachLocation = target.value;
         if (target.id === "clue-text") round.clue = target.value;
+        if (target.id === "planner-object-name") hunt.objectName = target.value;
+        if (target.id === "planner-coach-note") hunt.coachLocation = target.value;
+        if (target.hasAttribute("data-planner-round-title")) {
+          var titleRound = plannerRoundForId(target.getAttribute("data-planner-round-title"));
+          if (titleRound) titleRound.title = target.value;
+        }
+        if (target.hasAttribute("data-planner-hint")) {
+          var hintRound = plannerRoundForId(target.getAttribute("data-planner-hint"));
+          if (hintRound) hintRound.clue = target.value;
+        }
+        if (target.hasAttribute("data-planner-task")) {
+          var taskRound = plannerRoundForId(target.getAttribute("data-round-id"));
+          var planningTask = taskRound && taskRound.taskPool.filter(function (item) { return item.id === target.getAttribute("data-planner-task"); })[0];
+          if (planningTask) {
+            planningTask.text = target.value;
+            taskRound.tasks = taskRound.taskPool.map(function (item) { return item.text; });
+          }
+        }
         if (target.hasAttribute("data-task-text")) {
           var task = round.taskPool.filter(function (item) { return item.id === target.getAttribute("data-task-text"); })[0];
           if (task) {
@@ -1647,6 +1826,13 @@
           }
         }
         if (target.id === "camp-name-input") state.campName = target.value;
+        if (plannerInput) {
+          plannerPrompt = "";
+          var promptField = byId("planner-prompt");
+          var promptCopyButton = byId("modal-layer").querySelector("[data-action=copy-hint-prompt]");
+          if (promptField) promptField.value = "";
+          if (promptCopyButton) promptCopyButton.disabled = true;
+        }
         save();
       });
 
@@ -1671,6 +1857,40 @@
         }
         if (target.id === "point-value") {
           currentHunt().pointValue = Math.max(0, Number(target.value) || 0);
+          save();
+        }
+        if (target.hasAttribute("data-planner-assignment")) {
+          var assignmentRound = plannerRoundForId(target.getAttribute("data-round-id"));
+          var assignmentAthlete = athleteForId(target.getAttribute("data-athlete"));
+          var assignmentPlan = assignmentRound && taskListFor(assignmentRound, assignmentAthlete.id);
+          var assignmentCard = target.closest(".planning-athlete");
+          if (!assignmentPlan || !assignmentCard) return;
+          var assignmentIds = Array.prototype.slice.call(assignmentCard.querySelectorAll("[data-planner-assignment]")).map(function (select) {
+            return select.value;
+          }).filter(Boolean);
+          if (assignmentIds.some(function (taskId, index) { return assignmentIds.indexOf(taskId) !== index; })) {
+            toast("Give each athlete three different skills.");
+            openModal("planner");
+            return;
+          }
+          assignmentPlan.selectedTaskIds = uniqueSelectedTaskIds(assignmentRound, assignmentIds).slice(0, 3);
+          assignmentPlan.completedTaskIds = [];
+          assignmentPlan.hintRevealed = false;
+          assignmentPlan.adminOverride = assignmentPlan.selectedTaskIds.length === 3;
+          assignmentRound.taskSetsGenerated = currentClass().athletes.some(function (student) {
+            return taskListFor(assignmentRound, student.id).selectedTaskIds.length === 3;
+          });
+          assignmentCard.querySelector("small").textContent = assignmentPlan.selectedTaskIds.length + " / 3 assigned · " + uniqueEligibleTasks(assignmentRound, assignmentPlan).length + " eligible";
+          var assignedCount = currentClass().athletes.filter(function (student) {
+            return taskListFor(assignmentRound, student.id).selectedTaskIds.length === 3;
+          }).length;
+          var generateButton = byId("modal-layer").querySelector("[data-action=planner-generate][data-round-id=\"" + assignmentRound.id + "\"]");
+          if (generateButton) generateButton.textContent = "↺ GENERATE ALL 3 · " + assignedCount + "/" + currentClass().athletes.length;
+          plannerPrompt = "";
+          var assignmentPrompt = byId("planner-prompt");
+          var assignmentCopyButton = byId("modal-layer").querySelector("[data-action=copy-hint-prompt]");
+          if (assignmentPrompt) assignmentPrompt.value = "";
+          if (assignmentCopyButton) assignmentCopyButton.disabled = true;
           save();
         }
         if (target.hasAttribute("data-task-eligible")) {

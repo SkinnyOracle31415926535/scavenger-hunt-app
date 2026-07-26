@@ -11,6 +11,8 @@ The app gives athletes three shuffled gymnastics tasks, unlocks shared class hin
 ## Included so far
 
 - Complete standalone offline HTML app
+- Dedicated hunt-planning workspace for the object, hiding spot, hints, shared skills, and athlete assignments
+- Local copy-only LLM hint-prompt builder with no automatic network call
 - Cohesive Windows-95 yellow-star app icon
 - Project documentation
 
