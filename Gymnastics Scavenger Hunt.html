@@ -12,6 +12,7 @@
   <link rel="icon" type="image/png" sizes="1254x1254" href="assets/scavenger-hunt-icon.png">
   <link rel="apple-touch-icon" sizes="1254x1254" href="assets/scavenger-hunt-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="scavenger-sync.css?v=1">
   <title>Gymnastics Scavenger Hunt — Offline</title>
   <style>
     :root {
@@ -523,11 +524,12 @@
   <div class="toast" id="toast" role="status"></div>
   <input id="backup-file" class="hidden" type="file" accept="application/json,.json">
 
+  <script src="scavenger-storage.js?v=1"></script>
   <script>
     (function () {
       "use strict";
 
-      var STORAGE_KEY = "star-search-offline-v1";
+      var appStore = window.ScavengerStore;
       var EVENTS = ["Floor", "Mushroom", "Rings", "Vault", "P-Bars", "High Bar"];
       var counter = 0;
       var modal = null;
@@ -536,6 +538,7 @@
       var plannerPrompt = "";
       var secretVisible = false;
       var toastTimer = null;
+      var saveGeneration = 0;
       var timer = { running: false, seconds: 600 };
 
       function id(prefix) {
@@ -949,7 +952,7 @@
 
       function load() {
         try {
-          var saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+          var saved = appStore && appStore.readCandidate();
           if (valid(saved)) {
             if (saved.campName === "Summer Star Search") saved.campName = "Gymnastics Scavenger Hunt";
             return normalizeState(saved);
@@ -1070,12 +1073,23 @@
       }
 
       function save(message) {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-          byId("save-status").innerHTML = "<b>●</b> " + esc(message || "Saved on this device");
-        } catch (error) {
-          byId("save-status").innerHTML = "<b style=\"color:#a90000\">●</b> Browser storage is unavailable";
+        var generation = ++saveGeneration;
+        var candidate = copy(state);
+        if (!appStore) {
+          byId("save-status").innerHTML = "<b style=\"color:#a90000\">●</b> Safe storage is unavailable";
+          return Promise.resolve(false);
         }
+        byId("save-status").innerHTML = "<b style=\"color:#765800\">●</b> Saving on this device…";
+        return appStore.writeLocal(candidate).then(function (savedState) {
+          if (generation !== saveGeneration) return true;
+          state = normalizeState(copy(savedState));
+          reconcileActiveSelection();
+          byId("save-status").innerHTML = "<b>●</b> " + esc(message || "Saved on this device");
+        }).catch(function (error) {
+          if (generation !== saveGeneration) return false;
+          byId("save-status").innerHTML = "<b style=\"color:#a90000\">●</b> Local change not saved";
+          return false;
+        });
       }
 
       function toast(message) {
@@ -2081,9 +2095,79 @@
         byId("timer-readout").classList.toggle("urgent", timer.seconds <= 60);
       }, 1000);
 
-      save();
+      function reconcileActiveSelection() {
+        var classRoom = state.classes.filter(function (item) { return item.id === active.classId; })[0] || state.classes[0];
+        active.classId = classRoom.id;
+        var event = classRoom.events.filter(function (item) { return item.id === active.eventId; })[0] || classRoom.events[0];
+        active.eventId = event.id;
+        var hunt = event.hunts.filter(function (item) { return item.id === active.huntId; })[0] || event.hunts[0];
+        active.huntId = hunt.id;
+        active.round = Math.min(Math.max(0, active.round), hunt.rounds.length - 1);
+        var athlete = classRoom.athletes.filter(function (item) { return item.id === active.athleteId; })[0] || classRoom.athletes[0];
+        active.athleteId = athlete.id;
+      }
+
+      function applyExternalState(candidate) {
+        if (!valid(candidate)) throw new Error("Synchronized Scavenger Hunt data was rejected.");
+        state = normalizeState(copy(candidate));
+        reconcileActiveSelection();
+        resetTimer();
+        render();
+        byId("save-status").innerHTML = "<b>●</b> Synchronized on this device";
+      }
+
+      function hasActiveEditor() {
+        var focused = document.activeElement;
+        if (!focused || focused === document.body || focused.closest(".scavenger-sync-dialog")) return false;
+        return focused.matches("input:not([type=file]), textarea, select, [contenteditable=true]");
+      }
+
+      function whenEditorIdle() {
+        if (!hasActiveEditor()) return Promise.resolve();
+        return new Promise(function (resolve) {
+          function check() {
+            window.setTimeout(function () {
+              if (hasActiveEditor()) return;
+              document.removeEventListener("focusout", check, true);
+              resolve();
+            }, 0);
+          }
+          document.addEventListener("focusout", check, true);
+        });
+      }
+
+      window.ScavengerAppBridge = Object.freeze({
+        getState: function () { return copy(state); },
+        applyExternalState: applyExternalState,
+        hasActiveEditor: hasActiveEditor,
+        whenEditorIdle: whenEditorIdle
+      });
+
+      if (appStore) {
+        window.addEventListener(appStore.changeEvent, function (event) {
+          var detail = event.detail;
+          if (!detail || ["remote", "migration", "storage"].indexOf(detail.source) === -1) return;
+          whenEditorIdle().then(function () {
+            var next = appStore.readState();
+            if (!next) throw new Error("Synchronized Scavenger Hunt data is missing.");
+            applyExternalState(next);
+            return appStore.acknowledgeCurrentStorage();
+          }).catch(function () {
+            byId("save-status").innerHTML = "<b style=\"color:#a90000\">●</b> Synchronized update needs review";
+          });
+        });
+      }
+
+      if (!appStore || appStore.inspect().status === "missing") {
+        save().catch(function () {});
+      } else if (appStore.inspect().status === "invalid") {
+        byId("save-status").innerHTML = "<b style=\"color:#a90000\">●</b> Existing data preserved for recovery";
+      }
       render();
     }());
   </script>
+  <script src="scavenger-sync-safety.js?v=1"></script>
+  <script src="https://ryan-app-sync.ryan-666-mp3.chatgpt.site/ryan-app-sync.js"></script>
+  <script src="scavenger-sync.js?v=1"></script>
 </body>
 </html>
