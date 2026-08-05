@@ -433,38 +433,35 @@
 
     const style = documentRef.createElement("style");
     style.textContent = [
-      ".temporary-transfer-panel{position:fixed;z-index:2147483000;right:10px;bottom:10px;width:min(330px,calc(100vw - 20px));border:3px solid #101116;background:#fffdf2;color:#101116;box-shadow:5px 5px 0 rgba(0,0,0,.55);font:700 12px/1.35 Arial,sans-serif}",
-      ".temporary-transfer-panel__head{padding:8px 10px;background:#0033ff;color:#fff;font:900 11px/1.15 ui-monospace,monospace;letter-spacing:.04em}",
+      ".temporary-transfer-panel{position:fixed;z-index:2147483000;right:10px;bottom:10px;width:min(330px,calc(100vw - 20px));font:12px/1.35 Arial,\"MS Sans Serif\",Tahoma,sans-serif}",
       ".temporary-transfer-panel__body{padding:10px;display:grid;gap:8px}",
       ".temporary-transfer-panel p{margin:0;font-size:11px}",
       ".temporary-transfer-panel__actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}",
-      ".temporary-transfer-panel button{min-height:34px;border:2px solid #000;background:#ffe300;color:#101116;padding:5px 6px;font:900 10px/1.15 Arial,sans-serif;cursor:pointer}",
-      ".temporary-transfer-panel button[data-confirm-import]{grid-column:1/-1;background:#007e80;color:#fff}",
+      ".temporary-transfer-panel .button{width:100%;min-width:0}",
+      ".temporary-transfer-panel button[data-confirm-import]{grid-column:1/-1}",
       ".temporary-transfer-panel button:disabled{cursor:not-allowed;opacity:.55}",
-      ".temporary-transfer-panel [data-transfer-status]{min-height:1.35em;color:#005f62}",
-      ".temporary-transfer-panel [data-transfer-status][data-error=true]{color:#a90000}",
+      ".temporary-transfer-panel [data-transfer-status]{min-height:1.35em;color:var(--teal-dark)}",
+      ".temporary-transfer-panel [data-transfer-status][data-error=true]{color:var(--danger)}",
       ".temporary-transfer-panel__preview{margin:0;padding:0;list-style:none;display:grid;gap:3px}",
       ".temporary-transfer-panel__preview li{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dotted #777;padding-bottom:2px}",
       ".temporary-transfer-panel__sync{border-top:1px solid #777;padding-top:7px;display:grid;gap:6px}",
-      ".temporary-transfer-panel__sync button{background:#e9d7ff}",
       ".temporary-transfer-panel__conflict{display:grid;grid-template-columns:1fr 1fr;gap:4px;border-top:1px dotted #777;padding-top:6px}",
       ".temporary-transfer-panel__conflict strong{grid-column:1/-1;overflow-wrap:anywhere;font-size:10px}",
-      ".temporary-transfer-panel__conflict button{min-height:28px;background:#ffd5d5;font-size:9px}",
       ".temporary-transfer-panel__notice{border-top:1px solid #777;padding-top:7px;color:#333}",
     ].join("");
     documentRef.head.append(style);
 
     const panel = documentRef.createElement("aside");
-    panel.className = "temporary-transfer-panel";
+    panel.className = "temporary-transfer-panel window";
     panel.dataset.temporaryTransferPanel = "true";
     panel.setAttribute("aria-label", "Temporary settings and data transfer");
     panel.innerHTML = [
-      '<div class="temporary-transfer-panel__head">TEMPORARY DATA TRANSFER</div>',
+      '<div class="temporary-transfer-panel__head titlebar">TEMPORARY DATA TRANSFER</div>',
       '<div class="temporary-transfer-panel__body">',
       '<p>Move settings and saved app data between the legacy page and this private site. Photos and videos are not included.</p>',
       '<div class="temporary-transfer-panel__actions">',
-      '<button type="button" data-export>Export Settings &amp; Data</button>',
-      '<button type="button" data-import>Import Settings &amp; Data</button>',
+      '<button class="button yellow" type="button" data-export>Export Settings &amp; Data</button>',
+      '<button class="button" type="button" data-import>Import Settings &amp; Data</button>',
       '</div>',
       '<input type="file" accept="application/json,.json" data-file hidden>',
       '<p data-transfer-status aria-live="polite">No transfer file selected.</p>',
@@ -472,13 +469,13 @@
       '<p><strong>Preview:</strong> <span data-transfer-source></span></p>',
       '<ul class="temporary-transfer-panel__preview" data-transfer-preview></ul>',
       '<p class="temporary-transfer-panel__notice">Confirming downloads a safety backup of this device first, then replaces only this app’s local data.</p>',
-      '<button type="button" data-confirm-import>Confirm replacement &amp; download safety backup</button>',
+      '<button class="button blue" type="button" data-confirm-import>Confirm replacement &amp; download safety backup</button>',
       '</section>',
       '<section class="temporary-transfer-panel__sync" hidden data-transfer-sync>',
       '<p><strong>Private device sync</strong></p>',
       '<p data-sync-status aria-live="polite">Connect this browser to the private same-site sync store.</p>',
-      '<button type="button" data-enable-sync>Enable private sync &amp; sync now</button>',
-      '<button type="button" data-legacy-recovery>Download retained legacy sync recovery</button>',
+      '<button class="button blue" type="button" data-enable-sync>Enable private sync &amp; sync now</button>',
+      '<button class="button yellow" type="button" data-legacy-recovery>Download retained legacy sync recovery</button>',
       '<div data-sync-conflicts></div>',
       '</section>',
       '</div>',
@@ -582,18 +579,21 @@
           const label = documentRef.createElement("strong");
           label.textContent = conflict.label || conflict.key;
           const download = documentRef.createElement("button");
+          download.className = "button yellow";
           download.type = "button";
           download.textContent = "Download both";
           download.addEventListener("click", () => {
             dispatch("ryan-private-semantic-sync-download", { key: conflict.key });
           });
           const keepLocal = documentRef.createElement("button");
+          keepLocal.className = "button";
           keepLocal.type = "button";
           keepLocal.textContent = "Keep this device";
           keepLocal.addEventListener("click", () => {
             dispatch("ryan-private-semantic-sync-resolve", { key: conflict.key, choice: "local" });
           });
           const useRemote = documentRef.createElement("button");
+          useRemote.className = "button blue";
           useRemote.type = "button";
           useRemote.textContent = "Use synced record";
           useRemote.addEventListener("click", () => {
