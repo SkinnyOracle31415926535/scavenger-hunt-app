@@ -437,6 +437,7 @@
       ".temporary-transfer-panel__body{padding:10px;display:grid;gap:8px}",
       ".temporary-transfer-panel p{margin:0;font-size:11px}",
       ".temporary-transfer-panel__actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}",
+      "@media(max-width:420px){.temporary-transfer-panel__actions{grid-template-columns:1fr}.temporary-transfer-panel__actions .button{min-height:42px;white-space:normal;line-height:1.2}}",
       ".temporary-transfer-panel .button{width:100%;min-width:0}",
       ".temporary-transfer-panel button[data-confirm-import]{grid-column:1/-1}",
       ".temporary-transfer-panel button:disabled{cursor:not-allowed;opacity:.55}",
