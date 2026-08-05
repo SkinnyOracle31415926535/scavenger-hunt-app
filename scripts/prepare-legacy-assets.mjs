@@ -32,6 +32,7 @@ const assetsByApp = {
     "index.html",
     "scavenger-storage.js",
     "temporary-data-transfer.js",
+    "private-semantic-sync.js",
     "manifest.webmanifest",
     "assets",
   ],
