@@ -746,6 +746,55 @@
     };
   };
 
+  // Temporary local transfer support. It intentionally bypasses remote sync
+  // registration: importing a file is a reviewed browser-local replacement.
+  const transferSnapshot = () => {
+    const inspected = inspect();
+    if (inspected.status === 'missing') return { state: null };
+    if (inspected.status !== 'valid') {
+      throw inspected.error || inspectionError(
+        'Scavenger Hunt data must be backed up and reviewed before transfer.'
+      );
+    }
+    return { state: clone(inspected.value) };
+  };
+
+  const validateTransferSnapshot = candidate => (
+    exactKeys(candidate, ['state'])
+    && (candidate.state === null || isAppState(candidate.state))
+  );
+
+  const applyTransferSnapshot = candidate => {
+    if (!validateTransferSnapshot(candidate)) {
+      return Promise.reject(new Error('The Scavenger Hunt transfer file is invalid.'));
+    }
+    return whenLocalIdle().then(() => withAggregateLock(() => {
+      const currentRaw = root.localStorage.getItem(STATE_KEY);
+      const nextRaw = candidate.state === null ? null : JSON.stringify(clone(candidate.state));
+      if (currentRaw === nextRaw) return true;
+      if (nextRaw === null) root.localStorage.removeItem(STATE_KEY);
+      else root.localStorage.setItem(STATE_KEY, nextRaw);
+      if (root.localStorage.getItem(STATE_KEY) !== nextRaw) {
+        throw new Error('Scavenger Hunt could not verify its temporary data import.');
+      }
+      knownRaw = nextRaw;
+      pendingStorageRaw = undefined;
+      recordMutation('migration');
+      lastError = null;
+      dispatchChange({
+        key: STATE_KEY,
+        source: 'migration',
+        oldRaw: currentRaw,
+        newRaw: nextRaw,
+        revision: currentRevision(),
+      });
+      return true;
+    })).catch(error => {
+      publishError(error);
+      throw error;
+    });
+  };
+
   const hashedRecordId = async (prefix, identity) => {
     if (!validId(identity)) {
       throw new Error(`Scavenger Hunt could not identify a ${prefix} record.`);
@@ -1138,6 +1187,9 @@
     readCandidate,
     readState,
     rawBackup,
+    transferSnapshot,
+    validateTransferSnapshot,
+    applyTransferSnapshot,
     normalizeRecoverable,
     writeLocal,
     whenLocalIdle,

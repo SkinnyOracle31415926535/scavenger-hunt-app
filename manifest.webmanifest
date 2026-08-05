@@ -1,17 +1,23 @@
 {
-  "id": "/scavenger-hunt-app/",
+  "id": "./",
   "name": "Gymnastics Scavenger Hunt",
   "short_name": "Scavenger Hunt",
   "description": "A retro Windows-95 gymnastics scavenger hunt tracker.",
-  "start_url": "/scavenger-hunt-app/Gymnastics%20Scavenger%20Hunt.html",
-  "scope": "/scavenger-hunt-app/",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#005f62",
   "theme_color": "#007e80",
   "icons": [
     {
-      "src": "/scavenger-hunt-app/assets/scavenger-hunt-icon.png",
-      "sizes": "1254x1254",
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     }
